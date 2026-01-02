@@ -16,7 +16,7 @@ import {
   Building2,
   Info
 } from 'lucide-react';
-import QRScanner from '../src/components/QRScanner';
+import QRScanner from '../src/components/QrScanner';
 import { useAuth } from '../src/contexts/AuthContext';
 import { getToken } from '../src/utils/auth';
 
