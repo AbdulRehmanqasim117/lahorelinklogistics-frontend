@@ -353,6 +353,15 @@ const AppContent = () => {
       />
 
       <Route
+        path="/manager/assign-scan"
+        element={
+          <ProtectedRoute allowedRoles={["MANAGER"]}>
+            <CeoAssignByScan />
+          </ProtectedRoute>
+        }
+      />
+
+      <Route
         path="/manager/finance/invoice"
         element={
           <ProtectedRoute allowedRoles={["MANAGER"]}>

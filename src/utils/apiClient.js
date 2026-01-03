@@ -1,20 +1,7 @@
 // Centralized API client for browser fetch calls
-// Uses VITE_API_BASE_URL when provided, otherwise falls back to same-origin relative paths.
+// Uses API_BASE_URL from src/config/env when provided, otherwise falls back to same-origin relative paths.
 import { getToken } from './auth';
-
-const RAW_BASE_URL = import.meta.env.VITE_API_BASE_URL || '';
-
-const normalizeBaseUrl = (value) => {
-  if (!value) return '';
-  // Remove trailing slashes
-  return value.replace(/\/$/, '');
-};
-
-const API_BASE_URL = normalizeBaseUrl(RAW_BASE_URL);
-
-export const getApiBaseUrl = () => {
-  return API_BASE_URL;
-};
+import { API_BASE_URL } from '../config/env';
 
 /**
  * Wrapper around fetch with:
@@ -23,6 +10,7 @@ export const getApiBaseUrl = () => {
  * - lightweight structured logging in development
  */
 export const apiFetch = async (path, options = {}) => {
+  const url = `${API_BASE_URL || ''}${path.startsWith('/') ? path : `/${path}`}`;
   const {
     method = 'GET',
     headers = {},

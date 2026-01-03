@@ -2,6 +2,7 @@ import React, { useEffect, useState } from "react";
 import { useParams, useNavigate, useLocation } from "react-router-dom";
 import Barcode from "../components/Barcode.jsx";
 import QrCode from "../components/QrCode.jsx";
+import { APP_BASE_URL } from "../src/config/env";
 
 const LabelPrint = () => {
   const { id } = useParams();
@@ -111,7 +112,7 @@ const LabelPrint = () => {
     const fragile = labelData.order?.fragile ? "true" : "false";
     const pieces = labelData.order?.pieces || 1;
     const warehouseQrValue = `LLL|${bookingId}`;
-    const websiteQrValue = 'https://lahorelinklogistics.com';
+    const websiteQrValue = APP_BASE_URL;
 
     return (
       <div className="bg-white text-black w-full max-w-[800px] border-2 border-black box-border shadow-lg mx-auto print:shadow-none">

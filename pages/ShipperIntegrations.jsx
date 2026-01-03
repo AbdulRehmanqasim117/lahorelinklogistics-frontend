@@ -1,5 +1,6 @@
 import React, { useEffect, useState } from 'react';
 import { Clipboard } from 'lucide-react';
+import { API_BASE_URL } from '../src/config/env';
 
 export default function ShipperIntegrations() {
   const [cfg, setCfg] = useState(null);
@@ -49,7 +50,11 @@ export default function ShipperIntegrations() {
   };
 
   const webhookUrl = (provider) => {
-    const baseUrl = 'https://jeanelle-relaxative-lera.ngrok-free.dev';
+    const baseUrl = API_BASE_URL || (typeof window !== 'undefined' ? window.location.origin : '');
+    if (provider === 'SHOPIFY') {
+      // Shopify webhooks use HMAC verification instead of API key in URL
+      return `${baseUrl}/webhooks/shopify`;
+    }
     return `${baseUrl}/api/integrations/${provider.toLowerCase()}/orders?key=${cfg.apiKey}`;
   };
 

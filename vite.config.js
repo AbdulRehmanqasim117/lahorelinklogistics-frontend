@@ -4,17 +4,23 @@ import react from '@vitejs/plugin-react';
 
 export default defineConfig(({ mode }) => {
   const env = loadEnv(mode, '.', '');
-  const apiPort = process.env.API_PORT || 5000;
+
+  // Optional dev-only proxy target for local API (e.g. http://127.0.0.1:5000),
+  // configured via VITE_DEV_API_PROXY_TARGET to avoid hardcoding any host here.
+  const devProxyTarget = env.VITE_DEV_API_PROXY_TARGET || '';
+
   return {
     server: {
       port: 3000,
       host: '0.0.0.0',
-      proxy: {
-        '/api': {
-          target: 'http://localhost:5000',
-          changeOrigin: true,
-        }
-      }
+      proxy: devProxyTarget
+        ? {
+            '/api': {
+              target: devProxyTarget,
+              changeOrigin: true,
+            },
+          }
+        : undefined,
     },
     plugins: [react()],
     define: {

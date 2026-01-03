@@ -9,6 +9,9 @@ const CeoOrders = () => {
   const token = user?.token || getToken();
   const navigate = useNavigate();
 
+  const baseOrderDetailPath =
+    user?.role === "MANAGER" ? "/manager/orders" : "/ceo/orders";
+
   const [orders, setOrders] = useState([]);
   const [riders, setRiders] = useState([]);
   const [shippers, setShippers] = useState([]);
@@ -87,7 +90,7 @@ const CeoOrders = () => {
       );
       const data = await res.json();
       if (res.ok && Array.isArray(data) && data.length > 0) {
-        navigate(`/ceo/orders/${data[0]._id}`);
+        navigate(`${baseOrderDetailPath}/${data[0]._id}`);
       } else {
         setError("No order found for the provided ID");
       }
@@ -336,7 +339,7 @@ const CeoOrders = () => {
                       key={s._id}
                       className="px-3 py-2 text-sm hover:bg-gray-50 cursor-pointer"
                       onMouseDown={() => {
-                        navigate(`/ceo/orders/${s._id}`);
+                        navigate(`${baseOrderDetailPath}/${s._id}`);
                       }}
                     >
                       <span className="font-mono text-xs mr-2">{s.bookingId}</span>
@@ -378,7 +381,7 @@ const CeoOrders = () => {
                     <tr
                       key={o._id}
                       className="border-t border-gray-100 hover:bg-gray-50 cursor-pointer"
-                      onClick={() => navigate(`/ceo/orders/${o._id}`)}
+                      onClick={() => navigate(`${baseOrderDetailPath}/${o._id}`)}
                     >
                       <td className="py-2 px-3 text-xs text-gray-700">
                         {o.shipper?.companyName || o.shipper?.name || "Unknown"}

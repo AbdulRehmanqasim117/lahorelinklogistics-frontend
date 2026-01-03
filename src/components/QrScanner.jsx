@@ -115,16 +115,12 @@ const QRScanner = ({
 
       console.log("📱 getUserMedia available");
 
-      // Check for secure context (HTTPS or localhost)
-      const isSecure =
-        window.isSecureContext ||
-        window.location.hostname === "localhost" ||
-        window.location.hostname === "127.0.0.1" ||
-        window.location.protocol === "https:";
+      // Check for secure context (HTTPS origin)
+      const isSecure = window.isSecureContext || window.location.protocol === "https:";
 
       if (!isSecure) {
         throw new Error(
-          "Camera requires HTTPS connection or localhost. Please use HTTPS or manual input.",
+          "Camera requires a secure (HTTPS) connection. Please use HTTPS or manual input.",
         );
       }
 

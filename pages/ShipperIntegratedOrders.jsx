@@ -1,12 +1,11 @@
 import React, { useEffect, useMemo, useState } from "react";
-import { Package, RefreshCcw, Trash2 } from "lucide-react";
+import { Package, RefreshCcw } from "lucide-react";
 
 const ShipperIntegratedOrders = () => {
   const [orders, setOrders] = useState([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState("");
   const [search, setSearch] = useState("");
-  const [confirmDelete, setConfirmDelete] = useState(null);
   const [actionLoading, setActionLoading] = useState({});
 
   const token = typeof window !== "undefined" ? localStorage.getItem("token") : null;
@@ -15,7 +14,7 @@ const ShipperIntegratedOrders = () => {
     setLoading(true);
     setError("");
     try {
-      const res = await fetch("/api/orders/integrated/pending", {
+      const res = await fetch("/api/integrations/shopify/orders", {
         headers: { Authorization: token ? `Bearer ${token}` : "" },
       });
       const data = await res.json();
@@ -37,23 +36,20 @@ const ShipperIntegratedOrders = () => {
     if (!q) return orders;
     return orders.filter((o) => {
       return (
-        String(o?.bookingId || "").toLowerCase().includes(q) ||
-        String(o?.consigneeName || "").toLowerCase().includes(q) ||
-        String(o?.destinationCity || "").toLowerCase().includes(q)
+        String(o?.providerOrderNumber || o?.providerOrderId || "").toLowerCase().includes(q) ||
+        String(o?.customerName || "").toLowerCase().includes(q) ||
+        String(o?.city || "").toLowerCase().includes(q)
       );
     });
   }, [orders, search]);
 
   const badge = (o) => {
-    const isBooked = o?.bookingState === "BOOKED";
-    const isDeleted = o?.isDeleted === true;
-    const label = isDeleted ? "Deleted" : isBooked ? "Booked" : "Pending Approval";
+    const isBooked = o?.lllBookingStatus === "BOOKED";
+    const label = isBooked ? "Booked" : "Not Booked";
 
-    const color = isDeleted
-      ? "bg-red-50 text-red-700 border-red-200"
-      : isBooked
-        ? "bg-green-50 text-green-700 border-green-200"
-        : "bg-amber-50 text-amber-800 border-amber-200";
+    const color = isBooked
+      ? "bg-green-50 text-green-700 border-green-200"
+      : "bg-amber-50 text-amber-800 border-amber-200";
 
     return (
       <span className={`px-2 py-0.5 rounded-full text-xs border ${color}`}>{label}</span>
@@ -63,33 +59,18 @@ const ShipperIntegratedOrders = () => {
   const book = async (id) => {
     try {
       setActionLoading((p) => ({ ...p, [id]: true }));
-      const res = await fetch(`/api/orders/${id}/book`, {
-        method: "PATCH",
+      const res = await fetch(`/api/integrations/shopify/orders/${id}/book`, {
+        method: "POST",
         headers: { Authorization: token ? `Bearer ${token}` : "" },
       });
       const data = await res.json();
       if (!res.ok) throw new Error(data?.message || "Failed to book order");
-      setOrders((prev) => prev.filter((x) => x._id !== id));
+      const updatedIntegrated = data?.integratedOrder || null;
+      setOrders((prev) =>
+        prev.map((o) => (o._id === id && updatedIntegrated ? updatedIntegrated : o)),
+      );
     } catch (e) {
       setError(e.message || "Failed to book order");
-    } finally {
-      setActionLoading((p) => ({ ...p, [id]: false }));
-    }
-  };
-
-  const reject = async (id) => {
-    try {
-      setActionLoading((p) => ({ ...p, [id]: true }));
-      const res = await fetch(`/api/orders/${id}/reject`, {
-        method: "PATCH",
-        headers: { Authorization: token ? `Bearer ${token}` : "" },
-      });
-      const data = await res.json();
-      if (!res.ok) throw new Error(data?.message || "Failed to delete order");
-      setOrders((prev) => prev.filter((x) => x._id !== id));
-      setConfirmDelete(null);
-    } catch (e) {
-      setError(e.message || "Failed to delete order");
     } finally {
       setActionLoading((p) => ({ ...p, [id]: false }));
     }
@@ -141,10 +122,10 @@ const ShipperIntegratedOrders = () => {
               <table className="min-w-full text-sm">
                 <thead>
                   <tr className="text-left text-gray-500">
-                    <th className="py-2 px-3">Order ID</th>
+                    <th className="py-2 px-3">Shopify Order</th>
                     <th className="py-2 px-3">Customer</th>
                     <th className="py-2 px-3">City</th>
-                    <th className="py-2 px-3">COD / Amount</th>
+                    <th className="py-2 px-3">Total</th>
                     <th className="py-2 px-3">Status</th>
                     <th className="py-2 px-3 text-right">Actions</th>
                   </tr>
@@ -152,13 +133,17 @@ const ShipperIntegratedOrders = () => {
                 <tbody>
                   {filtered.map((o) => {
                     const disabled = !!actionLoading[o._id];
-                    const cod = Number(o?.codAmount || 0);
+                    const total = Number(o?.totalPrice || 0);
                     return (
                       <tr key={o._id} className="border-t border-gray-100">
-                        <td className="py-2 px-3 font-mono text-xs">{o.bookingId}</td>
-                        <td className="py-2 px-3 text-secondary">{o.consigneeName || "—"}</td>
-                        <td className="py-2 px-3">{o.destinationCity || "—"}</td>
-                        <td className="py-2 px-3">PKR {cod.toLocaleString()}</td>
+                        <td className="py-2 px-3 font-mono text-xs">
+                          {o.providerOrderNumber || o.providerOrderId}
+                        </td>
+                        <td className="py-2 px-3 text-secondary">{o.customerName || "—"}</td>
+                        <td className="py-2 px-3">{o.city || "—"}</td>
+                        <td className="py-2 px-3">
+                          {o.currency || "PKR"} {total.toLocaleString()}
+                        </td>
                         <td className="py-2 px-3">{badge(o)}</td>
                         <td className="py-2 px-3">
                           <div className="flex justify-end gap-2">
@@ -167,14 +152,7 @@ const ShipperIntegratedOrders = () => {
                               disabled={disabled}
                               className="px-3 py-1.5 text-xs bg-primary hover:bg-primary-hover text-white rounded border border-primary disabled:opacity-60"
                             >
-                              {disabled ? "Working..." : "Book"}
-                            </button>
-                            <button
-                              onClick={() => setConfirmDelete(o)}
-                              disabled={disabled}
-                              className="px-3 py-1.5 text-xs bg-red-50 hover:bg-red-100 text-red-700 rounded border border-red-200 flex items-center gap-2 disabled:opacity-60"
-                            >
-                              <Trash2 className="w-4 h-4" /> Delete
+                              {disabled ? "Working..." : "Book with LLL"}
                             </button>
                           </div>
                         </td>
@@ -188,39 +166,9 @@ const ShipperIntegratedOrders = () => {
         </div>
       </div>
 
-      {confirmDelete && (
-        <div
-          className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/50"
-          onClick={() => setConfirmDelete(null)}
-        >
-          <div
-            className="bg-white rounded-xl shadow-2xl w-full max-w-md overflow-hidden"
-            onClick={(e) => e.stopPropagation()}
-          >
-            <div className="p-6 border-b border-gray-100">
-              <h3 className="text-lg font-bold text-secondary">Confirm Delete</h3>
-              <p className="text-sm text-gray-600 mt-2">
-                Are you sure you want to delete this integrated order?
-              </p>
-            </div>
-            <div className="p-6 flex justify-end gap-2">
-              <button
-                onClick={() => setConfirmDelete(null)}
-                className="px-3 py-1.5 text-xs bg-gray-50 hover:bg-gray-100 rounded border border-gray-200 text-gray-600"
-              >
-                Cancel
-              </button>
-              <button
-                onClick={() => reject(confirmDelete._id)}
-                className="px-3 py-1.5 text-xs bg-red-600 hover:bg-red-700 text-white rounded border border-red-600"
-                disabled={!!actionLoading[confirmDelete._id]}
-              >
-                Confirm
-              </button>
-            </div>
-          </div>
-        </div>
-      )}
+      {/* Delete/reject flow for integrated orders is intentionally omitted in the
+          Shopify flow; shippers can ignore unbooked orders or manage them in
+          their Shopify admin. */}
     </div>
   );
 };
