@@ -10,7 +10,6 @@ import { API_BASE_URL } from '../config/env';
  * - lightweight structured logging in development
  */
 export const apiFetch = async (path, options = {}) => {
-  const url = `${API_BASE_URL || ''}${path.startsWith('/') ? path : `/${path}`}`;
   const {
     method = 'GET',
     headers = {},
