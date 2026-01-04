@@ -48,7 +48,7 @@ export const apiFetch = async (path, options = {}) => {
 
   const isAbsolute = /^https?:\/\//i.test(path);
   const base = isAbsolute || !API_BASE_URL ? '' : API_BASE_URL;
-  const url = `${base}${path}`;
+  const requestUrl = `${base}${path}`;
 
   if (import.meta.env.DEV) {
     // Avoid logging full token
@@ -56,7 +56,7 @@ export const apiFetch = async (path, options = {}) => {
     console.log('[apiFetch] Request', {
       method,
       path,
-      url,
+      url: requestUrl,
       hasBaseUrl: !!API_BASE_URL,
       tokenPresent: !!effectiveToken,
       headers: {
@@ -67,7 +67,7 @@ export const apiFetch = async (path, options = {}) => {
   }
 
   try {
-    const response = await fetch(url, {
+    const response = await fetch(requestUrl, {
       method,
       headers: finalHeaders,
       body: finalBody,
