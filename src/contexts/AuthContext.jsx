@@ -65,6 +65,7 @@ export const AuthProvider = ({ children }) => {
       cnic: u?.cnic || u?.cnicNumber || null,
       // Structured bank fields
       bankName: u?.bankName || null,
+      accountType: u?.accountType || null,
       accountHolderName: u?.accountHolderName || null,
       accountNumber: u?.accountNumber || null,
       iban: u?.iban || null,

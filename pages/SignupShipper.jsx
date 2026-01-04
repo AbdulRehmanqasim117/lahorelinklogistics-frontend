@@ -15,6 +15,7 @@ const SignupShipper = () => {
     contactNumber: '',
     emergencyContact: '',
     pickupAddress: '',
+    accountType: '',
     accountHolderName: '',
     accountNumber: '',
     iban: ''
@@ -67,6 +68,7 @@ const SignupShipper = () => {
     
     if (!formData.companyName.trim()) errors.companyName = 'Business name is required';
     if (!formData.contactNumber.trim()) errors.contactNumber = 'Contact number is required';
+    if (!formData.accountType.trim()) errors.accountType = 'Account type is required';
     if (!formData.accountHolderName.trim()) errors.accountHolderName = 'Account holder name is required';
     if (!formData.accountNumber.trim()) errors.accountNumber = 'Account number is required';
     
@@ -90,7 +92,8 @@ const SignupShipper = () => {
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ 
           ...userData,
-          role: 'SHIPPER'
+          role: 'SHIPPER',
+          accountType: formData.accountType
         })
       });
       
@@ -256,6 +259,23 @@ const SignupShipper = () => {
               error={formErrors.pickupAddress}
             />
             {formErrors.pickupAddress && <p className="mt-1 text-sm text-red-500">{formErrors.pickupAddress}</p>}
+          </div>
+
+          <div>
+            <label className="block text-sm font-medium text-gray-700 mb-1">Account Type</label>
+            <select
+              name="accountType"
+              value={formData.accountType}
+              onChange={handleChange}
+              className={`w-full border rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-secondary focus:border-secondary ${formErrors.accountType ? 'border-red-500' : 'border-gray-300'}`}
+            >
+              <option value="">Select account type</option>
+              <option value="BANK">Bank Account</option>
+              <option value="EASYPAISA">Easypaisa</option>
+              <option value="JAZZCASH">JazzCash</option>
+              <option value="OTHER">Other</option>
+            </select>
+            {formErrors.accountType && <p className="mt-1 text-sm text-red-500">{formErrors.accountType}</p>}
           </div>
 
           <div>

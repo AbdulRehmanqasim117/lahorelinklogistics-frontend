@@ -32,6 +32,7 @@ export const getUserInfo = () => {
     pickupAddress: localStorage.getItem('pickupAddress') || '',
     cnic: localStorage.getItem('cnic') || '',
     bankName: localStorage.getItem('bankName') || '',
+    accountType: localStorage.getItem('accountType') || '',
     accountHolderName: localStorage.getItem('accountHolderName') || '',
     accountNumber: localStorage.getItem('accountNumber') || '',
     iban: localStorage.getItem('iban') || '',
@@ -104,6 +105,10 @@ export const setAuth = (data) => {
    if (data.bankName !== undefined) {
      if (!data.bankName) localStorage.removeItem('bankName');
      else localStorage.setItem('bankName', data.bankName);
+   }
+   if (data.accountType !== undefined) {
+     if (!data.accountType) localStorage.removeItem('accountType');
+     else localStorage.setItem('accountType', data.accountType);
    }
    if (data.accountHolderName !== undefined) {
      if (!data.accountHolderName) localStorage.removeItem('accountHolderName');
@@ -182,6 +187,7 @@ export const clearAuth = () => {
   localStorage.removeItem('pickupAddress');
   localStorage.removeItem('cnic');
   localStorage.removeItem('bankName');
+  localStorage.removeItem('accountType');
   localStorage.removeItem('accountHolderName');
   localStorage.removeItem('accountNumber');
   localStorage.removeItem('iban');
