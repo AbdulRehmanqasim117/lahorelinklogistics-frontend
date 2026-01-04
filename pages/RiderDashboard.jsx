@@ -211,7 +211,7 @@ const RiderDashboard = () => {
   );
 
   const MobileDashboardView = () => (
-    <div className="space-y-8">
+    <div className="space-y-6">
       <MobileDashboardShell
         heroTitle={
           mobilePeriod === '7days'
@@ -310,6 +310,48 @@ const RiderDashboard = () => {
             : []),
         ]}
       />
+
+      <div className="bg-white rounded-xl border border-gray-100 shadow-sm">
+        <div className="p-4">
+          <h3 className="font-bold text-base text-secondary mb-3">All Orders</h3>
+          {loading ? (
+            <p className="text-sm text-gray-500">Loading...</p>
+          ) : mobileFilteredOrders.length === 0 ? (
+            <p className="text-sm text-gray-500">No assigned orders.</p>
+          ) : (
+            <ul className="space-y-3">
+              {mobileFilteredOrders.map((o) => (
+                <li
+                  key={o._id}
+                  className="border border-gray-100 rounded-lg p-3 active:bg-gray-50 cursor-pointer"
+                  onClick={() => navigate(`/rider/task/${o._id}`)}
+                >
+                  <div className="flex items-center justify-between gap-2">
+                    <div className="flex-1 min-w-0">
+                      <p className="text-sm font-semibold text-secondary truncate">
+                        {o.consigneeName || 'Customer'}
+                      </p>
+                      <p className="text-xs text-gray-500 truncate">
+                        {o.destinationCity || '—'} 
+                        {o.bookingId ? ` • ${o.bookingId}` : ''}
+                      </p>
+                    </div>
+                    <span className="ml-2 text-xs font-semibold text-primary whitespace-nowrap">
+                      {o.status}
+                    </span>
+                  </div>
+                  <div className="mt-1 text-xs text-gray-500">
+                    {o.consigneeAddress}
+                  </div>
+                  <div className="mt-1 text-right text-sm font-semibold text-secondary">
+                    PKR {Number(o.codAmount || 0).toLocaleString()}
+                  </div>
+                </li>
+              ))}
+            </ul>
+          )}
+        </div>
+      </div>
     </div>
   );
 

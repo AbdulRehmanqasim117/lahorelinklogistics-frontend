@@ -80,19 +80,35 @@ const RiderTaskDetail = () => {
       </div>
 
       {order.status !== 'DELIVERED' && order.status !== 'RETURNED' && (
-        <div className="flex gap-3">
-          {order.status === 'ASSIGNED' && (
-            <button onClick={() => updateStatus('OUT_FOR_DELIVERY')} className="flex-1 h-12 bg-blue-600 hover:bg-blue-700 text-white rounded-lg font-semibold">
-              <Play className="w-4 h-4 inline" /> Start Delivery
-            </button>
-          )}
-          <button onClick={() => updateStatus('FIRST_ATTEMPT')} className="flex-1 h-12 bg-blue-50 hover:bg-blue-100 text-blue-700 rounded-lg font-semibold">1st Attempt</button>
-          <button onClick={() => updateStatus('SECOND_ATTEMPT')} className="flex-1 h-12 bg-blue-50 hover:bg-blue-100 text-blue-700 rounded-lg font-semibold">2nd Attempt</button>
-          <button onClick={() => updateStatus('THIRD_ATTEMPT')} className="flex-1 h-12 bg-blue-50 hover:bg-blue-100 text-blue-700 rounded-lg font-semibold">3rd Attempt</button>
-          <button onClick={() => updateStatus('DELIVERED')} className="flex-1 h-12 bg-green-600 hover:bg-green-700 text-white rounded-lg font-semibold">
+        <div className="flex flex-col gap-3 sm:flex-row sm:flex-wrap">
+          <button
+            onClick={() => updateStatus('FIRST_ATTEMPT')}
+            className="w-full sm:flex-1 h-12 bg-blue-50 hover:bg-blue-100 text-blue-700 rounded-lg font-semibold"
+          >
+            1st Attempt
+          </button>
+          <button
+            onClick={() => updateStatus('SECOND_ATTEMPT')}
+            className="w-full sm:flex-1 h-12 bg-blue-50 hover:bg-blue-100 text-blue-700 rounded-lg font-semibold"
+          >
+            2nd Attempt
+          </button>
+          <button
+            onClick={() => updateStatus('THIRD_ATTEMPT')}
+            className="w-full sm:flex-1 h-12 bg-blue-50 hover:bg-blue-100 text-blue-700 rounded-lg font-semibold"
+          >
+            3rd Attempt
+          </button>
+          <button
+            onClick={() => updateStatus('DELIVERED')}
+            className="w-full sm:flex-1 h-12 bg-green-600 hover:bg-green-700 text-white rounded-lg font-semibold"
+          >
             <Check className="w-4 h-4 inline" /> Delivered
           </button>
-          <button onClick={() => updateStatus('RETURNED')} className="flex-1 h-12 bg-red-600 hover:bg-red-700 text-white rounded-lg font-semibold">
+          <button
+            onClick={() => updateStatus('RETURNED')}
+            className="w-full sm:flex-1 h-12 bg-red-600 hover:bg-red-700 text-white rounded-lg font-semibold"
+          >
             <RotateCcw className="w-4 h-4 inline" /> Return
           </button>
         </div>

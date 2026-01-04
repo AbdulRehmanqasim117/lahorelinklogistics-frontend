@@ -1,11 +1,13 @@
 import React, { useEffect, useState } from 'react';
 import { Package } from 'lucide-react';
+import { useNavigate } from 'react-router-dom';
 
 const RiderHistory = () => {
   const [orders, setOrders] = useState([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState('');
   const token = typeof window !== 'undefined' ? localStorage.getItem('token') : null;
+  const navigate = useNavigate();
 
   const fetchOrders = async () => {
     setLoading(true);
@@ -33,12 +35,27 @@ const RiderHistory = () => {
       </div>
       <div className="bg-white p-6 rounded-xl border border-gray-100 shadow-sm">
         {error && <p className="text-sm text-red-600">{error}</p>}
-        {loading ? <p className="text-sm text-gray-500">Loading...</p> : (
+        {loading ? (
+          <p className="text-sm text-gray-500">Loading...</p>
+        ) : orders.length === 0 ? (
+          <p className="text-sm text-gray-500">No orders found.</p>
+        ) : (
           <ul className="space-y-3">
-            {orders.map(o => (
-              <li key={o._id} className="border border-gray-100 rounded-lg p-4 flex justify-between">
-                <span className="text-sm text-gray-700">{o.consigneeName} • {o.destinationCity}</span>
-                <span className="text-xs">{o.status}</span>
+            {orders.map((o) => (
+              <li
+                key={o._id}
+                className="border border-gray-100 rounded-lg p-4 flex items-center justify-between active:bg-gray-50 cursor-pointer"
+                onClick={() => navigate(`/rider/task/${o._id}`)}
+              >
+                <div className="flex-1 min-w-0">
+                  <p className="text-sm text-gray-700 truncate">
+                    {o.consigneeName || 'Customer'} • {o.destinationCity || '—'}
+                  </p>
+                  {o.bookingId && (
+                    <p className="text-xs text-gray-400 font-mono truncate">{o.bookingId}</p>
+                  )}
+                </div>
+                <span className="ml-2 text-xs font-semibold text-primary whitespace-nowrap">{o.status}</span>
               </li>
             ))}
           </ul>
