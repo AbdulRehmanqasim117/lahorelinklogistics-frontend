@@ -1,6 +1,5 @@
 import React, { useEffect, useState } from "react";
 import { useParams, useNavigate } from "react-router-dom";
-import logo from "../assets/logo.png";
 
 const InvoicePrint = () => {
   const { id } = useParams();
@@ -193,7 +192,7 @@ const InvoicePrint = () => {
           <div>
             <div className="flex items-center space-x-3 mb-2">
               <img
-                src={companyProfile?.logoUrl || logo}
+                src={companyProfile?.logoUrl || "/logo.png"}
                 alt={companyProfile?.companyName || "Company Logo"}
                 className="w-32 h-16 object-contain"
               />

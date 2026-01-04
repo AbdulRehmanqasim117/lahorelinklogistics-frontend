@@ -88,7 +88,7 @@ const Layout = ({ children, title }) => {
       `}>
         <div className="h-full flex flex-col">
           <div className="p-6 border-b border-gray-100 flex items-center gap-3">
-            <img src="/assets/logo.png" alt="LahoreLink Logistics" className="h-8" />
+            <img src="/logo.png" alt="Company Logo" className="h-10 w-auto" />
           </div>
 
           <div className="p-4 flex-1 overflow-y-auto">

@@ -105,7 +105,7 @@ const Login = () => {
         
         <div className="relative z-10">
           <div className="w-20 h-20 bg-white rounded-lg flex items-center justify-center mb-6 shadow-lg shadow-green-900/50">
-            <img src="/assets/logo.png" alt="" />
+            <img src="/logo.png" alt="LahoreLink Logistics logo" />
           </div>
           <h1 className="text-4xl font-bold mb-4 tracking-tight">LahoreLink Logistics</h1>
           <p className="text-gray-400 text-lg max-w-md">Smart logistics dashboard for same-day deliveries. Manage your fleet, shipments, and COD with ease.</p>
@@ -140,7 +140,7 @@ const Login = () => {
           <div className="text-center lg:text-left">
             <div className="lg:hidden flex justify-center">
                <div className="w-[200px] h-[200px] flex items-center justify-center ">
-                <img src="/assets/logo.png" alt="" />
+                <img src="/logo.png" alt="LahoreLink Logistics logo" />
               </div>
             </div>
             <h2 className="text-3xl font-bold text-secondary">Welcome back</h2>
