@@ -85,11 +85,9 @@ const LabelPrint = () => {
     // hamesha FINAL_AMOUNT me include honge.
     const codComponent = paymentType === "ADVANCE" ? 0 : codAmountRaw;
     const finalAmount = codComponent + serviceCharges;
+    const rawRemarks = (labelData.order?.remarks || "").trim();
     const remarks =
-      labelData.order?.remarks ||
-      (labelData.order?.fragile
-        ? "FRAGILE - Handle with care"
-        : "Allow to open in front of rider");
+      rawRemarks || (labelData.order?.fragile ? "FRAGILE - Handle with care" : "");
     const products = labelData.order?.productDescription || "N/A";
     const customerName = labelData.consignee?.name || "N/A";
     const customerPhone = labelData.consignee?.phone || "N/A";
@@ -245,7 +243,7 @@ const LabelPrint = () => {
         {/* Remarks Row */}
         <div className="border-t-2 border-black p-1 text-xs">
           <span className="font-bold mr-1">Remarks:</span>
-          <span className="font-bold">- {remarks}</span>
+          <span className="font-bold">{remarks ? `- ${remarks}` : ""}</span>
         </div>
 
         {/* Products Row - reduced height so top sections remain prominent on label */}

@@ -1,0 +1,14 @@
+# SPA fallback for React/Vite app on Apache/Hostinger
+# If the requested file or directory does not exist,
+# always serve index.html so React Router can handle the route.
+
+RewriteEngine On
+RewriteBase /
+
+# Skip existing files and directories
+RewriteCond %{REQUEST_FILENAME} -f [OR]
+RewriteCond %{REQUEST_FILENAME} -d
+RewriteRule ^ - [L]
+
+# Fallback everything else to index.html
+RewriteRule . /index.html [L]
