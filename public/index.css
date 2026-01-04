@@ -1,0 +1,3 @@
+/* Empty stylesheet to avoid 404s for /index.css in production.
+ * All styling is handled via Tailwind CDN and component classes.
+ */
