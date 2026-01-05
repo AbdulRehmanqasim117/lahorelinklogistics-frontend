@@ -36,7 +36,7 @@ export default defineConfig(({ mode }) => {
           scope: '/',
           display: 'standalone',
           background_color: '#ffffff',
-          theme_color: '#0f6b3a',
+          theme_color: '#0B6D45',
           icons: [
             {
               src: '/pwa-192x192.png',
@@ -58,6 +58,9 @@ export default defineConfig(({ mode }) => {
         },
         workbox: {
           globPatterns: ['**/*.{js,css,html,ico,png,svg}'],
+          // Override default globIgnores so that dev-dist/sw.js is still matched
+          // in development and Workbox does not warn about empty precache lists.
+          globIgnores: ['**/node_modules/**/*'],
           runtimeCaching: [
             {
               urlPattern: ({ request }) =>
@@ -78,9 +81,6 @@ export default defineConfig(({ mode }) => {
               },
             },
           ],
-        },
-        devOptions: {
-          enabled: true,
         },
       }),
     ],
