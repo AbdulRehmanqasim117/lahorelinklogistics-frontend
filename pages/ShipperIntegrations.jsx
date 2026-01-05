@@ -11,15 +11,15 @@ import {
   ShoppingBag,
   Store,
 } from "lucide-react";
-import { API_BASE_URL } from "../src/config/env";
+import { getApiBaseUrl } from "../src/config/env";
 import { useToast } from "../src/contexts/ToastContext";
 
 const PROVIDERS = ["SHOPIFY", "WOOCOMMERCE"];
 
-const getApiBaseUrl = () => {
-  if (API_BASE_URL) return API_BASE_URL;
-  if (typeof window !== "undefined") return window.location.origin;
-  return "";
+const buildApiUrl = (path) => {
+  const baseUrl = getApiBaseUrl();
+  if (!baseUrl) return path;
+  return `${baseUrl}${path}`;
 };
 
 const buildWebhookUrl = (provider, apiKey) => {
@@ -90,7 +90,7 @@ export default function ShipperIntegrations() {
     setLoading(true);
     setError("");
     try {
-      const res = await fetch("/api/integrations/shipper/me", {
+      const res = await fetch(buildApiUrl("/api/integrations/shipper/me"), {
         headers: {
           Authorization: token ? `Bearer ${token}` : "",
         },
@@ -125,7 +125,7 @@ export default function ShipperIntegrations() {
         })),
       };
 
-      const res = await fetch("/api/integrations/shipper/me", {
+      const res = await fetch(buildApiUrl("/api/integrations/shipper/me"), {
         method: "PUT",
         headers: {
           "Content-Type": "application/json",
@@ -159,12 +159,15 @@ export default function ShipperIntegrations() {
     if (!cfg) return;
     setRegenLoading(true);
     try {
-      const res = await fetch("/api/integrations/shipper/me/regenerate-key", {
-        method: "POST",
-        headers: {
-          Authorization: token ? `Bearer ${token}` : "",
+      const res = await fetch(
+        buildApiUrl("/api/integrations/shipper/me/regenerate-key"),
+        {
+          method: "POST",
+          headers: {
+            Authorization: token ? `Bearer ${token}` : "",
+          },
         },
-      });
+      );
       const json = await res.json();
       if (!res.ok) {
         throw new Error(json.message || "Failed to regenerate key");
