@@ -81,10 +81,9 @@ const LabelPrint = () => {
       labelData.order?.paymentType || labelData.shipper?.serviceType || "COD";
     const paymentType = String(paymentTypeRaw).toUpperCase();
 
-    // For ADVANCE, customer se COD collect nahi hota (0), lekin service charges
-    // hamesha FINAL_AMOUNT me include honge.
+    // Amount label par sirf COD amount show karna hai (service charges add nahi karne)
     const codComponent = paymentType === "ADVANCE" ? 0 : codAmountRaw;
-    const finalAmount = codComponent + serviceCharges;
+    const finalAmount = codComponent;
     const rawRemarks = (labelData.order?.remarks || "").trim();
     const remarks =
       rawRemarks || (labelData.order?.fragile ? "FRAGILE - Handle with care" : "");

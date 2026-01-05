@@ -16,6 +16,7 @@ import {
 import { useNavigate, useLocation } from "react-router-dom";
 import { useAuth } from "../contexts/AuthContext";
 import { getToken } from "../utils/auth";
+import InstallPWAButton from "./InstallPWAButton.jsx";
 
 const Layout = ({ children, title }) => {
   const { user, logout } = useAuth();
@@ -290,6 +291,7 @@ const Layout = ({ children, title }) => {
             <h2 className="text-xl font-bold text-secondary">{title}</h2>
           </div>
           <div className="flex items-center gap-4">
+            <InstallPWAButton />
             {(user?.role === "CEO" || user?.role === "MANAGER") && (
               <div className="relative">
                 <button
@@ -317,7 +319,7 @@ const Layout = ({ children, title }) => {
                     ) : (
                       <div className="divide-y divide-gray-100">
                         {notifications.map((n) => (
-                          <div key={n._id} className="p-4 hover:bg-gray-50">
+                          <div key={n.id} className="p-4 hover:bg-gray-50">
                             <div className="flex items-start justify-between">
                               <div className="flex-1">
                                 <p className="text-sm font-medium text-gray-900">
@@ -331,7 +333,7 @@ const Layout = ({ children, title }) => {
                                 </p>
                               </div>
                               <button
-                                onClick={() => markAsRead(n._id)}
+                                onClick={() => markAsRead(n.id)}
                                 className="ml-2 px-2 py-1 text-xs bg-primary text-white rounded hover:bg-primary-hover"
                               >
                                 Mark as picked up

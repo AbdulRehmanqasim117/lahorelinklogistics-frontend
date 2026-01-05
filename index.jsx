@@ -2,10 +2,15 @@ import React from 'react';
 import ReactDOM from 'react-dom/client';
 import App from './App.jsx';
 import { API_BASE_URL } from './src/config/env';
+import { registerSW } from 'virtual:pwa-register';
 
 const rootElement = document.getElementById('root');
 if (!rootElement) {
   throw new Error('Could not find root element to mount to');
+}
+
+if (typeof window !== 'undefined') {
+  registerSW({ immediate: true });
 }
 
 // Global fetch wrapper: prefix relative "/api" calls with API_BASE_URL when configured

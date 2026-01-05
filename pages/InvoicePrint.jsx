@@ -1,15 +1,40 @@
 import React, { useEffect, useState } from "react";
 import { useParams, useNavigate } from "react-router-dom";
+import { useAuth } from "../src/contexts/AuthContext";
 
 const InvoicePrint = () => {
   const { id } = useParams();
   const navigate = useNavigate();
+  const { user } = useAuth();
   const [invoice, setInvoice] = useState(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState("");
   const [companyProfile, setCompanyProfile] = useState(null);
 
   const token = localStorage.getItem("token");
+
+  const handleBack = () => {
+    // If this window was opened from another page (e.g. ManagerInvoice), prefer closing it
+    if (window.opener && !window.opener.closed) {
+      window.close();
+      return;
+    }
+
+    // If there is actual browser history, go back
+    if (window.history.length > 1) {
+      navigate(-1);
+      return;
+    }
+
+    // Fallback: navigate to appropriate invoice list based on role
+    if (user?.role === "CEO") {
+      navigate("/ceo/finance/invoice");
+    } else if (user?.role === "MANAGER") {
+      navigate("/manager/finance/invoice");
+    } else {
+      navigate("/");
+    }
+  };
 
   useEffect(() => {
     if (id) {
@@ -173,7 +198,7 @@ const InvoicePrint = () => {
 
       <div className="no-print flex justify-between items-center p-4 bg-white border-b">
         <button
-          onClick={() => navigate(-1)}
+          onClick={handleBack}
           className="px-4 py-2 bg-gray-600 text-white rounded hover:bg-gray-700"
         >
           Back

@@ -78,7 +78,7 @@ const ShippingLabel = ({ orderData }) => {
   const paymentType = String(paymentTypeRaw).toUpperCase();
 
   const codComponent = paymentType === "ADVANCE" ? 0 : codAmountRaw;
-  const finalAmount = codComponent + serviceCharges;
+  const finalAmount = codComponent;
   const remarks =
     orderData?.remarks ||
     orderData?.order?.remarks ||
