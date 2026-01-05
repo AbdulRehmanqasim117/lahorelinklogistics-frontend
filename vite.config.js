@@ -28,7 +28,7 @@ export default defineConfig(({ mode }) => {
       VitePWA({
         registerType: 'autoUpdate',
         injectRegister: null,
-        includeAssets: ['favicon.ico', 'logo.png'],
+        includeAssets: ['favicon.ico', 'logo.png', 'tab.png'],
         manifest: {
           name: 'LahoreLink Logistics',
           short_name: 'LLL',
@@ -39,17 +39,17 @@ export default defineConfig(({ mode }) => {
           theme_color: '#0B6D45',
           icons: [
             {
-              src: '/pwa-192x192.png',
+              src: '/tab.png',
               sizes: '192x192',
               type: 'image/png'
             },
             {
-              src: '/pwa-512x512.png',
+              src: '/tab.png',
               sizes: '512x512',
               type: 'image/png'
             },
             {
-              src: '/pwa-512x512.png',
+              src: '/tab.png',
               sizes: '512x512',
               type: 'image/png',
               purpose: 'any maskable'
