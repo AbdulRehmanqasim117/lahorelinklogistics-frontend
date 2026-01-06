@@ -16,7 +16,6 @@ import Login from "./pages/Login.jsx";
 import CeoDashboard from "./pages/CeoDashboard.jsx";
 import CeoUsers from "./pages/CeoUsers.jsx";
 import CeoOrders from "./pages/CeoOrders.jsx";
-import CeoIntegratedOrders from "./pages/CeoIntegratedOrders.jsx";
 import CeoLogistics from "./pages/CeoLogistics.jsx";
 import CeoCompanyProfile from "./pages/CeoCompanyProfile.jsx";
 import CeoCompanyFinance from "./pages/CeoCompanyFinance.jsx";
@@ -194,15 +193,6 @@ const AppContent = () => {
         element={
           <ProtectedRoute allowedRoles={["CEO"]}>
             <CeoOrders />
-          </ProtectedRoute>
-        }
-      />
-
-      <Route
-        path="/ceo/integrated-orders"
-        element={
-          <ProtectedRoute allowedRoles={["CEO"]}>
-            <CeoIntegratedOrders />
           </ProtectedRoute>
         }
       />

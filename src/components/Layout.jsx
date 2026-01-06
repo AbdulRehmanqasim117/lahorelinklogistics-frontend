@@ -112,7 +112,6 @@ const Layout = ({ children, title }) => {
           { icon: Users, label: "Users", path: "/ceo/users" },
           { icon: Truck, label: "Riders", path: "/ceo/riders" },
           { icon: Package, label: "Orders", path: "/ceo/orders" },
-          { icon: Package, label: "Integrated Orders", path: "/ceo/integrated-orders" },
           { icon: QrCode, label: "Assign by Scan", path: "/ceo/assign-scan" },
           { icon: DollarSign, label: "Commission", path: "/ceo/commission" },
           {

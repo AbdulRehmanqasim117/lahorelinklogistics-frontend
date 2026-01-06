@@ -102,6 +102,26 @@ export default function ShipperIntegrations() {
         throw new Error(json.message || "Failed to load integrations");
       }
       setCfg(normalizeConfig(json));
+
+      try {
+        const storeRes = await fetch(
+          buildApiUrl("/api/integrations/shopify/store"),
+          {
+            headers: {
+              Authorization: token ? `Bearer ${token}` : "",
+            },
+          },
+        );
+        if (storeRes.ok) {
+          const storeJson = await storeRes.json();
+          setShopifyDomain(storeJson.shopDomain || "");
+        }
+      } catch (e2) {
+        console.error(
+          "[ShipperIntegrations] Failed to load Shopify store",
+          e2,
+        );
+      }
     } catch (e) {
       setError(e.message || "Failed to load integrations");
     } finally {
@@ -272,6 +292,8 @@ export default function ShipperIntegrations() {
       }
 
       const domain = json.integration?.shopDomain || raw.toLowerCase();
+
+      setShopifyDomain(domain);
 
       showToast({
         type: "success",
