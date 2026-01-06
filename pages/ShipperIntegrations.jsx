@@ -81,6 +81,8 @@ export default function ShipperIntegrations() {
   const [error, setError] = useState("");
   const [showKey, setShowKey] = useState(false);
   const [showShopifyHelp, setShowShopifyHelp] = useState(false);
+  const [shopifyDomain, setShopifyDomain] = useState("");
+  const [connectingShopify, setConnectingShopify] = useState(false);
   const [showRegenConfirm, setShowRegenConfirm] = useState(false);
 
   const token = localStorage.getItem("token");
@@ -233,6 +235,60 @@ export default function ShipperIntegrations() {
         title: "Copy failed",
         description: "Could not copy the URL. Please copy it manually.",
       });
+    }
+  };
+
+  const handleConnectShopify = async () => {
+    const raw = (shopifyDomain || "").trim();
+    if (!raw) {
+      showToast({
+        type: "error",
+        title: "Shopify domain required",
+        description:
+          "Please enter your Shopify .myshopify.com domain, for example mystore.myshopify.com.",
+      });
+      return;
+    }
+
+    setConnectingShopify(true);
+    try {
+      const body = {
+        shopDomain: raw.toLowerCase(),
+        webhookVersion: "2026-01",
+      };
+
+      const res = await fetch(buildApiUrl("/api/integrations/shopify/connect"), {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+          Authorization: token ? `Bearer ${token}` : "",
+        },
+        body: JSON.stringify(body),
+      });
+
+      const json = await res.json();
+      if (!res.ok) {
+        throw new Error(json.message || "Failed to connect Shopify store");
+      }
+
+      const domain = json.integration?.shopDomain || raw.toLowerCase();
+
+      showToast({
+        type: "success",
+        title: "Shopify store connected",
+        description:
+          domain
+            ? `Store ${domain} is now linked. New Shopify webhooks will create integrated orders here.`
+            : "Your Shopify store is now linked. New webhooks will create integrated orders.",
+      });
+    } catch (e) {
+      showToast({
+        type: "error",
+        title: "Could not connect Shopify store",
+        description: e.message || "Please check the domain and try again.",
+      });
+    } finally {
+      setConnectingShopify(false);
     }
   };
 
@@ -460,6 +516,38 @@ export default function ShipperIntegrations() {
               >
                 <Clipboard className="w-3.5 h-3.5" />
                 <span>Copy URL</span>
+              </button>
+            </div>
+          </div>
+
+          <div className="space-y-2">
+            <div className="text-xs font-medium text-gray-700">
+              Shopify store domain
+            </div>
+            <p className="text-[11px] text-gray-600">
+              Enter your store&apos;s .myshopify.com domain (for example
+              <span className="font-mono"> mystore.myshopify.com</span>). This links
+              Shopify webhooks to your LahoreLink account so Integrated Orders can appear
+              in your dashboard.
+            </p>
+            <div className="flex flex-col sm:flex-row sm:items-center gap-2">
+              <input
+                type="text"
+                value={shopifyDomain}
+                onChange={(e) => setShopifyDomain(e.target.value)}
+                placeholder="mystore.myshopify.com"
+                className="flex-1 text-xs border border-gray-200 rounded-lg px-3 py-2 focus:outline-none focus:ring-2 focus:ring-primary/40"
+              />
+              <button
+                type="button"
+                onClick={handleConnectShopify}
+                disabled={connectingShopify}
+                className="inline-flex items-center gap-1.5 px-3 py-1.5 text-xs rounded-lg bg-emerald-600 text-white hover:bg-emerald-700 disabled:opacity-60 disabled:cursor-not-allowed focus:outline-none focus:ring-2 focus:ring-emerald-500/70"
+              >
+                {connectingShopify && (
+                  <span className="h-3 w-3 rounded-full border-2 border-white border-t-transparent animate-spin" />
+                )}
+                <span>{connectingShopify ? "Connecting..." : "Connect store"}</span>
               </button>
             </div>
           </div>
