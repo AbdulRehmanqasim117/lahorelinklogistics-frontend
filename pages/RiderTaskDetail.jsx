@@ -9,6 +9,7 @@ const RiderTaskDetail = () => {
   const [order, setOrder] = useState(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState('');
+  const [statusExpanded, setStatusExpanded] = useState(false);
   const token = typeof window !== 'undefined' ? localStorage.getItem('token') : null;
 
   const fetchOrder = async () => {
@@ -37,6 +38,7 @@ const RiderTaskDetail = () => {
       const data = await res.json();
       if (!res.ok) throw new Error(data.message || 'Failed to update status');
       setOrder(data);
+      setStatusExpanded(false);
     } catch (e) { setError(e.message); }
   };
 
@@ -45,6 +47,7 @@ const RiderTaskDetail = () => {
   if (!order) return null;
 
   const codText = Number(order.codAmount || 0).toLocaleString();
+  const isFinal = ['DELIVERED', 'RETURNED', 'FAILED'].includes(order.status);
 
   return (
     <div className="space-y-6">
@@ -79,7 +82,16 @@ const RiderTaskDetail = () => {
         </div>
       </div>
 
-      {order.status !== 'DELIVERED' && order.status !== 'RETURNED' && (
+      {isFinal && !statusExpanded ? (
+        <div className="flex flex-col gap-3 sm:flex-row sm:flex-wrap">
+          <button
+            onClick={() => setStatusExpanded(true)}
+            className="w-full sm:flex-1 h-12 bg-gray-100 hover:bg-gray-200 text-gray-700 rounded-lg font-semibold"
+          >
+            Change Status
+          </button>
+        </div>
+      ) : (
         <div className="flex flex-col gap-3 sm:flex-row sm:flex-wrap">
           <button
             onClick={() => updateStatus('FIRST_ATTEMPT')}

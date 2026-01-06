@@ -192,6 +192,34 @@ const ShipperDashboard = () => {
     }
   };
 
+  const handleSendPickupRequest = async () => {
+    try {
+      const res = await fetch("/api/notifications/pickup-request", {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+          Authorization: token ? `Bearer ${token}` : "",
+        },
+        body: JSON.stringify({
+          shipperId: user?.id || localStorage.getItem("userId"),
+          message: "Pickup required",
+        }),
+      });
+
+      if (res.ok) {
+        alert("Pickup request sent successfully!");
+      } else {
+        let data = null;
+        try {
+          data = await res.json();
+        } catch (_) {}
+        alert((data && data.message) || "Failed to send pickup request");
+      }
+    } catch (e) {
+      alert("Error sending pickup request: " + e.message);
+    }
+  };
+
   const lookup = async (e) => {
     e && e.preventDefault();
     if (!searchId.trim()) return;
@@ -755,6 +783,18 @@ const ShipperDashboard = () => {
         </div>
       )}
 
+      {view === "dashboard" && (
+        <div className="sm:hidden px-4 mt-4">
+          <Button
+            onClick={handleSendPickupRequest}
+            variant="outline"
+            fullWidth
+          >
+            Send Pickup Request
+          </Button>
+        </div>
+      )}
+
       <div
         className={`${isDashboard ? "hidden sm:block" : ""} bg-white p-6 rounded-xl border border-gray-100 shadow-sm`}
       >
@@ -767,35 +807,7 @@ const ShipperDashboard = () => {
           </div>
           <div className="flex items-center gap-2">
             {view === "dashboard" && (
-              <Button
-                onClick={async () => {
-                  try {
-                    const res = await fetch(
-                      "/api/notifications/pickup-request",
-                      {
-                        method: "POST",
-                        headers: {
-                          "Content-Type": "application/json",
-                          Authorization: token ? `Bearer ${token}` : "",
-                        },
-                        body: JSON.stringify({
-                          shipperId: user?.id || localStorage.getItem("userId"),
-                          message: "Pickup required",
-                        }),
-                      },
-                    );
-                    if (res.ok) {
-                      alert("Pickup request sent successfully!");
-                    } else {
-                      const data = await res.json();
-                      alert(data.message || "Failed to send pickup request");
-                    }
-                  } catch (e) {
-                    alert("Error sending pickup request: " + e.message);
-                  }
-                }}
-                variant="outline"
-              >
+              <Button onClick={handleSendPickupRequest} variant="outline">
                 Send Pickup Request
               </Button>
             )}

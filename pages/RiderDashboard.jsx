@@ -17,6 +17,7 @@ const RiderDashboard = () => {
   const isMobile = useIsMobile();
   const { user } = useAuth();
   const [portalBlocked, setPortalBlocked] = useState(false);
+  const [statusExpanded, setStatusExpanded] = useState({});
 
   const fetchOrders = async () => {
     setLoading(true);
@@ -106,6 +107,7 @@ const RiderDashboard = () => {
       const data = await res.json();
       if (!res.ok) throw new Error(data.message || 'Failed to update status');
       await fetchOrders();
+      setStatusExpanded((prev) => ({ ...prev, [orderId]: false }));
     } catch (e) {
       setError(e.message);
     }
@@ -446,32 +448,94 @@ const RiderDashboard = () => {
             <p className="text-sm text-gray-500">No assigned orders.</p>
           ) : (
             <ul className="space-y-3">
-              {orders.map((o) => (
-                <li key={o._id} className="border border-gray-100 rounded-lg p-4 cursor-pointer hover:bg-gray-50" onClick={() => navigate(`/rider/task/${o._id}`)}>
-                  <div className="flex justify-between">
-                    <span className="font-mono text-xs">{o.bookingId}</span>
-                    <span className="text-xs">{o.status}</span>
-                  </div>
-                  <div className="text-sm text-gray-600 flex items-center gap-2 mt-1">
-                    <MapPin className="w-3 h-3" />
-                    <span>{o.consigneeAddress} • {o.destinationCity}</span>
-                  </div>
-                  <div className="mt-2 text-right text-sm font-semibold text-secondary">PKR {Number(o.codAmount || 0).toLocaleString()}</div>
-                  {o.status !== 'DELIVERED' && o.status !== 'RETURNED' && (
-                    <div className="flex gap-2 mt-3">
-                      <button onClick={() => updateStatus(o._id, 'FIRST_ATTEMPT')} className="px-3 py-1.5 text-xs bg-blue-50 hover:bg-blue-100 text-blue-700 rounded">1st Attempt</button>
-                      <button onClick={() => updateStatus(o._id, 'SECOND_ATTEMPT')} className="px-3 py-1.5 text-xs bg-blue-50 hover:bg-blue-100 text-blue-700 rounded">2nd Attempt</button>
-                      <button onClick={() => updateStatus(o._id, 'THIRD_ATTEMPT')} className="px-3 py-1.5 text-xs bg-blue-50 hover:bg-blue-100 text-blue-700 rounded">3rd Attempt</button>
-                      <button onClick={() => updateStatus(o._id, 'DELIVERED')} className="px-3 py-1.5 text-xs bg-green-600 hover:bg-green-700 text-white rounded">
-                        <Check className="w-4 h-4 inline" /> Delivered
-                      </button>
-                      <button onClick={() => updateStatus(o._id, 'RETURNED')} className="px-3 py-1.5 text-xs bg-red-600 hover:bg-red-700 text-white rounded">
-                        <RotateCcw className="w-4 h-4 inline" /> Return
-                      </button>
+              {orders.map((o) => {
+                const isFinal = ['DELIVERED', 'RETURNED', 'FAILED'].includes(o.status);
+                const isExpanded = !!statusExpanded[o._id];
+                return (
+                  <li
+                    key={o._id}
+                    className="border border-gray-100 rounded-lg p-4 cursor-pointer hover:bg-gray-50"
+                    onClick={() => navigate(`/rider/task/${o._id}`)}
+                  >
+                    <div className="flex justify-between">
+                      <span className="font-mono text-xs">{o.bookingId}</span>
+                      <span
+                        className={`text-xs px-2 py-0.5 rounded-full ${
+                          o.status === 'DELIVERED'
+                            ? 'bg-green-100 text-green-800'
+                            : o.status === 'RETURNED'
+                              ? 'bg-red-100 text-red-800'
+                              : o.status === 'OUT_FOR_DELIVERY'
+                                ? 'bg-blue-100 text-blue-800'
+                                : 'bg-gray-100 text-gray-700'
+                        }`}
+                      >
+                        {o.status}
+                      </span>
                     </div>
-                  )}
-                </li>
-              ))}
+                    <div className="text-sm text-gray-600 flex items-center gap-2 mt-1">
+                      <MapPin className="w-3 h-3" />
+                      <span>
+                        {o.consigneeAddress}  b7 {o.destinationCity}
+                      </span>
+                    </div>
+                    <div className="mt-2 text-right text-sm font-semibold text-secondary">
+                      PKR {Number(o.codAmount || 0).toLocaleString()}
+                    </div>
+                    <div
+                      className="flex gap-2 mt-3"
+                      onClick={(e) => e.stopPropagation()}
+                    >
+                      {isFinal && !isExpanded ? (
+                        <button
+                          onClick={() =>
+                            setStatusExpanded((prev) => ({
+                              ...prev,
+                              [o._id]: true,
+                            }))
+                          }
+                          className="px-3 py-1.5 text-xs bg-gray-100 hover:bg-gray-200 text-gray-700 rounded"
+                        >
+                          Change Status
+                        </button>
+                      ) : (
+                        <>
+                          <button
+                            onClick={() => updateStatus(o._id, 'FIRST_ATTEMPT')}
+                            className="px-3 py-1.5 text-xs bg-blue-50 hover:bg-blue-100 text-blue-700 rounded"
+                          >
+                            1st Attempt
+                          </button>
+                          <button
+                            onClick={() => updateStatus(o._id, 'SECOND_ATTEMPT')}
+                            className="px-3 py-1.5 text-xs bg-blue-50 hover:bg-blue-100 text-blue-700 rounded"
+                          >
+                            2nd Attempt
+                          </button>
+                          <button
+                            onClick={() => updateStatus(o._id, 'THIRD_ATTEMPT')}
+                            className="px-3 py-1.5 text-xs bg-blue-50 hover:bg-blue-100 text-blue-700 rounded"
+                          >
+                            3rd Attempt
+                          </button>
+                          <button
+                            onClick={() => updateStatus(o._id, 'DELIVERED')}
+                            className="px-3 py-1.5 text-xs bg-green-600 hover:bg-green-700 text-white rounded"
+                          >
+                            <Check className="w-4 h-4 inline" /> Delivered
+                          </button>
+                          <button
+                            onClick={() => updateStatus(o._id, 'RETURNED')}
+                            className="px-3 py-1.5 text-xs bg-red-600 hover:bg-red-700 text-white rounded"
+                          >
+                            <RotateCcw className="w-4 h-4 inline" /> Return
+                          </button>
+                        </>
+                      )}
+                    </div>
+                  </li>
+                );
+              })}
             </ul>
           )}
         </div>

@@ -262,20 +262,18 @@ const SignupShipper = () => {
           </div>
 
           <div>
-            <label className="block text-sm font-medium text-gray-700 mb-1">Account Type</label>
-            <select
+            <Input
+              label="Account Type"
               name="accountType"
               value={formData.accountType}
               onChange={handleChange}
-              className={`w-full border rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-secondary focus:border-secondary ${formErrors.accountType ? 'border-red-500' : 'border-gray-300'}`}
-            >
-              <option value="">Select account type</option>
-              <option value="BANK">Bank Account</option>
-              <option value="EASYPAISA">Easypaisa</option>
-              <option value="JAZZCASH">JazzCash</option>
-              <option value="OTHER">Other</option>
-            </select>
-            {formErrors.accountType && <p className="mt-1 text-sm text-red-500">{formErrors.accountType}</p>}
+              placeholder="e.g. Meezan Current, Easypaisa, JazzCash"
+              error={formErrors.accountType}
+              required
+            />
+            {formErrors.accountType && (
+              <p className="mt-1 text-sm text-red-500">{formErrors.accountType}</p>
+            )}
           </div>
 
           <div>

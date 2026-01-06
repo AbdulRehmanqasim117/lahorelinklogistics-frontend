@@ -63,14 +63,66 @@ const ShipperIntegratedOrders = () => {
         method: "POST",
         headers: { Authorization: token ? `Bearer ${token}` : "" },
       });
-      const data = await res.json();
-      if (!res.ok) throw new Error(data?.message || "Failed to book order");
-      const updatedIntegrated = data?.integratedOrder || null;
+      let data = null;
+      let text = "";
+      const contentType = res.headers.get("Content-Type") || "";
+      try {
+        if (contentType.includes("application/json")) {
+          data = await res.json();
+        } else {
+          text = await res.text();
+        }
+      } catch (e) {
+        try {
+          text = await res.text();
+        } catch (_) {}
+      }
+      if (!res.ok) {
+        const msg = data?.message || text || "Failed to book order";
+        throw new Error(msg);
+      }
+      const updatedIntegrated = (data && data.integratedOrder) || null;
       setOrders((prev) =>
         prev.map((o) => (o._id === id && updatedIntegrated ? updatedIntegrated : o)),
       );
     } catch (e) {
       setError(e.message || "Failed to book order");
+    } finally {
+      setActionLoading((p) => ({ ...p, [id]: false }));
+    }
+  };
+
+  const unbook = async (id) => {
+    try {
+      setActionLoading((p) => ({ ...p, [id]: true }));
+      const res = await fetch(`/api/integrations/shopify/orders/${id}/unbook`, {
+        method: "POST",
+        headers: { Authorization: token ? `Bearer ${token}` : "" },
+      });
+      let data = null;
+      let text = "";
+      const contentType = res.headers.get("Content-Type") || "";
+      try {
+        if (contentType.includes("application/json")) {
+          data = await res.json();
+        } else {
+          text = await res.text();
+        }
+      } catch (e) {
+        try {
+          text = await res.text();
+        } catch (_) {}
+      }
+      if (!res.ok) {
+        const msg = data?.message || text || "Failed to unbook order";
+        throw new Error(msg);
+      }
+      const updatedIntegrated = (data && data.integratedOrder) || null;
+      setOrders((prev) =>
+        prev.map((o) => (o._id === id && updatedIntegrated ? updatedIntegrated : o)),
+      );
+    } catch (e) {
+      setError(e.message || "Failed to unbook order");
     } finally {
       setActionLoading((p) => ({ ...p, [id]: false }));
     }
@@ -134,6 +186,7 @@ const ShipperIntegratedOrders = () => {
                   {filtered.map((o) => {
                     const disabled = !!actionLoading[o._id];
                     const total = Number(o?.totalPrice || 0);
+                    const isBooked = o?.lllBookingStatus === "BOOKED";
                     return (
                       <tr key={o._id} className="border-t border-gray-100">
                         <td className="py-2 px-3 font-mono text-xs">
@@ -148,11 +201,15 @@ const ShipperIntegratedOrders = () => {
                         <td className="py-2 px-3">
                           <div className="flex justify-end gap-2">
                             <button
-                              onClick={() => book(o._id)}
+                              onClick={() => (isBooked ? unbook(o._id) : book(o._id))}
                               disabled={disabled}
                               className="px-3 py-1.5 text-xs bg-primary hover:bg-primary-hover text-white rounded border border-primary disabled:opacity-60"
                             >
-                              {disabled ? "Working..." : "Book with LLL"}
+                              {disabled
+                                ? "Working..."
+                                : isBooked
+                                  ? "Unbook"
+                                  : "Book with LLL"}
                             </button>
                           </div>
                         </td>

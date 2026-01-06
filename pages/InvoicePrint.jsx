@@ -170,6 +170,9 @@ const InvoicePrint = () => {
   const netPayableValue =
     invoice.netPayable != null ? invoice.netPayable : computedNet;
 
+  const displayInvoiceStatus =
+    invoice.status === "FINALIZED" ? "PAID" : invoice.status || "";
+
   return (
     <>
       <style>{`
@@ -303,7 +306,7 @@ const InvoicePrint = () => {
               <div>
                 <strong>Status:</strong>{" "}
                 <span className="text-green-600 font-medium">
-                  {invoice.status}
+                  {displayInvoiceStatus}
                 </span>
               </div>
             </div>
