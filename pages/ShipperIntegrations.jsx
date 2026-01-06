@@ -133,7 +133,6 @@ export default function ShipperIntegrations() {
   useEffect(() => {
     load();
     // eslint-disable-next-line react-hooks/exhaustive-deps
-    //asdasdasd
   }, []);
 
   const handleSave = async () => {
