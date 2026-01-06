@@ -116,7 +116,8 @@ export default function ShipperIntegrations() {
           const storeJson = await storeRes.json();
           setShopifyDomain(storeJson.shopDomain || "");
         }
-      } catch (e2) {
+      } 
+      catch (e2) {
         console.error(
           "[ShipperIntegrations] Failed to load Shopify store",
           e2,
@@ -132,6 +133,7 @@ export default function ShipperIntegrations() {
   useEffect(() => {
     load();
     // eslint-disable-next-line react-hooks/exhaustive-deps
+    //asdasdasd
   }, []);
 
   const handleSave = async () => {
