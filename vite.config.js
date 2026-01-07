@@ -28,7 +28,7 @@ export default defineConfig(({ mode }) => {
       VitePWA({
         registerType: 'autoUpdate',
         injectRegister: null,
-        includeAssets: ['favicon.ico', 'logo.png', 'tab.png'],
+        includeAssets: ['favicon.ico', 'logo.png', 'tab.png', 'pwa-192x192.jpeg', 'pwa-512x512.jpeg'],
         manifest: {
           name: 'LahoreLink Logistics',
           short_name: 'LLL',
@@ -39,25 +39,25 @@ export default defineConfig(({ mode }) => {
           theme_color: '#0B6D45',
           icons: [
             {
-              src: '/tab.png',
+              src: '/pwa-192x192.jpeg',
               sizes: '192x192',
-              type: 'image/png'
+              type: 'image/jpeg'
             },
             {
-              src: '/tab.png',
+              src: '/pwa-512x512.jpeg',
               sizes: '512x512',
-              type: 'image/png'
+              type: 'image/jpeg'
             },
             {
-              src: '/tab.png',
+              src: '/pwa-512x512.jpeg',
               sizes: '512x512',
-              type: 'image/png',
+              type: 'image/jpeg',
               purpose: 'any maskable'
             }
           ]
         },
         workbox: {
-          globPatterns: ['**/*.{js,css,html,ico,png,svg}'],
+          globPatterns: ['**/*.{js,css,html,ico,png,svg,jpeg}'],
           // Override default globIgnores so that dev-dist/sw.js is still matched
           // in development and Workbox does not warn about empty precache lists.
           globIgnores: ['**/node_modules/**/*'],
