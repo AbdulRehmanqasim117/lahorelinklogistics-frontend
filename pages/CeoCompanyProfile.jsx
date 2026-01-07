@@ -6,7 +6,7 @@ import {
   MapPin,
   Phone,
   Mail,
-  Globe,
+  Globe,//here
   AlertCircle,
   CheckCircle,
   Loader,
