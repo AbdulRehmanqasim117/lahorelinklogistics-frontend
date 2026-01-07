@@ -14,6 +14,7 @@ const ManagerCommission = () => {
     type: "FLAT",
     value: 0,
     weightBrackets: [{ minKg: 0, maxKg: 1, charge: 100 }],
+    returnCharge: 0,
   });
   const [riderForm, setRiderForm] = useState({
     riderId: "",
@@ -85,16 +86,28 @@ const ManagerCommission = () => {
       });
       if (res.ok) {
         const config = await res.json();
+        const numericValue =
+          typeof config.value === "number" && !Number.isNaN(config.value)
+            ? config.value
+            : Number(config.value) || 0;
+        const numericReturnChargeRaw = Number(
+          config.returnCharge !== undefined && config.returnCharge !== null
+            ? config.returnCharge
+            : 0,
+        );
+        const numericReturnCharge =
+          Number.isNaN(numericReturnChargeRaw) || numericReturnChargeRaw < 0
+            ? 0
+            : numericReturnChargeRaw;
+
         setForm({
           type: config.type || "FLAT",
-          value:
-            typeof config.value === "number" && !Number.isNaN(config.value)
-              ? config.value
-              : 0,
+          value: numericValue,
           weightBrackets:
             config.weightBrackets && config.weightBrackets.length > 0
               ? config.weightBrackets
               : [{ minKg: 0, maxKg: 1, charge: 100 }],
+          returnCharge: numericReturnCharge,
         });
       } else if (res.status === 404) {
         // No config found, use defaults
@@ -102,6 +115,7 @@ const ManagerCommission = () => {
           type: "FLAT",
           value: 0,
           weightBrackets: [{ minKg: 0, maxKg: 1, charge: 100 }],
+          returnCharge: 0,
         });
       } else {
         const data = await res.json();
@@ -234,6 +248,10 @@ const ManagerCommission = () => {
               : Number(b.maxKg),
           charge: Number(b.charge),
         })),
+        returnCharge:
+          form.returnCharge === "" || form.returnCharge === null || form.returnCharge === undefined
+            ? 0
+            : Number(form.returnCharge) || 0,
       };
 
       const res = await fetch(`/api/commission/${selectedShipperId}`, {
@@ -469,6 +487,28 @@ const ManagerCommission = () => {
           {!validation.valid && (
             <p className="text-sm text-red-600 mt-2">{validation.message}</p>
           )}
+        </div>
+
+        <div className="mt-8 max-w-xs">
+          <h4 className="text-md font-semibold text-secondary mb-2">
+            Return Service Charge (per returned order)
+          </h4>
+          <label className="block text-sm font-medium text-gray-700 mb-1">
+            Amount (PKR)
+          </label>
+          <input
+            type="number"
+            min="0"
+            value={form.returnCharge ?? ""}
+            onChange={(e) =>
+              setForm((prev) => ({
+                ...prev,
+                returnCharge: e.target.value,
+              }))
+            }
+            className="w-full px-3 py-2 rounded-lg border border-gray-200 bg-white text-sm"
+            placeholder="e.g. 100"
+          />
         </div>
 
         <div className="flex justify-end gap-3 mt-6">
