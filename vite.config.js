@@ -31,7 +31,7 @@ export default defineConfig(({ mode }) => {
         includeAssets: ['favicon.ico', 'logo.png', 'tab.png', 'pwa-192x192.jpeg', 'pwa-512x512.jpeg'],
         manifest: {
           name: 'LahoreLink Logistics',
-          short_name: 'LLL',
+          short_name: 'LahoreLink Logistics',
           start_url: '/',
           scope: '/',
           display: 'standalone',
