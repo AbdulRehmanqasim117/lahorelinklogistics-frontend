@@ -1,5 +1,5 @@
 import React, { useEffect, useState } from "react";
-import { Wallet, Truck, Plus, Trash2 } from "lucide-react";
+import { Wallet, Truck } from "lucide-react";
 import { useToast } from "../src/contexts/ToastContext";
 
 const ManagerCommission = () => {
@@ -13,7 +13,10 @@ const ManagerCommission = () => {
   const [form, setForm] = useState({
     type: "FLAT",
     value: 0,
-    weightBrackets: [{ minKg: 0, maxKg: 1, charge: 100 }],
+    minWeightKg: 0,
+    maxWeightKg: "",
+    flatChargePkr: 0,
+    overagePerKgPkr: 0,
     returnCharge: 0,
   });
   const [riderForm, setRiderForm] = useState({
@@ -103,10 +106,23 @@ const ManagerCommission = () => {
         setForm({
           type: config.type || "FLAT",
           value: numericValue,
-          weightBrackets:
-            config.weightBrackets && config.weightBrackets.length > 0
-              ? config.weightBrackets
-              : [{ minKg: 0, maxKg: 1, charge: 100 }],
+          minWeightKg:
+            config.minWeightKg !== null && config.minWeightKg !== undefined
+              ? Number(config.minWeightKg)
+              : 0,
+          maxWeightKg:
+            config.maxWeightKg !== null && config.maxWeightKg !== undefined
+              ? Number(config.maxWeightKg)
+              : "",
+          flatChargePkr:
+            config.flatChargePkr !== null && config.flatChargePkr !== undefined
+              ? Number(config.flatChargePkr)
+              : 0,
+          overagePerKgPkr:
+            config.overagePerKgPkr !== null &&
+            config.overagePerKgPkr !== undefined
+              ? Number(config.overagePerKgPkr)
+              : 0,
           returnCharge: numericReturnCharge,
         });
       } else if (res.status === 404) {
@@ -114,7 +130,10 @@ const ManagerCommission = () => {
         setForm({
           type: "FLAT",
           value: 0,
-          weightBrackets: [{ minKg: 0, maxKg: 1, charge: 100 }],
+          minWeightKg: 0,
+          maxWeightKg: "",
+          flatChargePkr: 0,
+          overagePerKgPkr: 0,
           returnCharge: 0,
         });
       } else {
@@ -136,87 +155,56 @@ const ManagerCommission = () => {
     }
   }, [selectedShipperId]);
 
-  // Validation function for weight brackets
-  const validateBrackets = (brackets) => {
-    if (!Array.isArray(brackets) || brackets.length === 0) {
+  // Validation for the single weight-based rule
+  const validateRule = (currentForm) => {
+    const minRaw = currentForm.minWeightKg;
+    const maxRaw = currentForm.maxWeightKg;
+    const flatRaw = currentForm.flatChargePkr;
+    const overRaw = currentForm.overagePerKgPkr;
+
+    const min =
+      minRaw === "" || minRaw === null || minRaw === undefined
+        ? 0
+        : Number(minRaw);
+
+    if (!Number.isFinite(min) || min < 0) {
       return {
         valid: false,
-        message: "At least one weight bracket is required",
+        message: "Minimum weight must be a non-negative number",
       };
     }
 
-    // Normalize values (treat empty string as null for maxKg) and sort by minKg
-    const normalized = brackets
-      .map((b, idx) => {
-        const rawMin = b.minKg;
-        const rawMax = b.maxKg;
-        const rawCharge = b.charge;
+    const hasMax =
+      maxRaw !== "" && maxRaw !== null && maxRaw !== undefined;
+    const max = hasMax ? Number(maxRaw) : null;
 
-        const minKg =
-          rawMin === "" || rawMin === null || rawMin === undefined
-            ? NaN
-            : Number(rawMin);
-        const maxKg =
-          rawMax === "" || rawMax === null || rawMax === undefined
-            ? null
-            : Number(rawMax);
-        const charge =
-          rawCharge === "" || rawCharge === null || rawCharge === undefined
-            ? NaN
-            : Number(rawCharge);
+    if (hasMax && (!Number.isFinite(max) || max <= min)) {
+      return {
+        valid: false,
+        message: "Maximum weight must be greater than minimum weight",
+      };
+    }
 
-        return { index: idx, minKg, maxKg, charge };
-      })
-      .sort((a, b) => a.minKg - b.minKg);
+    const flat =
+      flatRaw === "" || flatRaw === null || flatRaw === undefined
+        ? 0
+        : Number(flatRaw);
+    if (!Number.isFinite(flat) || flat < 0) {
+      return {
+        valid: false,
+        message: "Base charge must be a non-negative number",
+      };
+    }
 
-    for (let i = 0; i < normalized.length; i++) {
-      const bracket = normalized[i];
-
-      // Validate minKg
-      if (!Number.isFinite(bracket.minKg) || bracket.minKg < 0) {
-        return {
-          valid: false,
-          message: `Invalid minimum weight for bracket ${i + 1}`,
-        };
-      }
-
-      // Validate charge
-      if (!Number.isFinite(bracket.charge) || bracket.charge < 0) {
-        return { valid: false, message: `Invalid charge for bracket ${i + 1}` };
-      }
-
-      // Validate maxKg if provided
-      if (
-        bracket.maxKg !== null &&
-        (!Number.isFinite(bracket.maxKg) || bracket.maxKg <= bracket.minKg)
-      ) {
-        return {
-          valid: false,
-          message: `Maximum weight must be greater than minimum weight for bracket ${i + 1}`,
-        };
-      }
-
-      // Check for overlaps
-      if (i > 0) {
-        const prevBracket = normalized[i - 1];
-        if (
-          prevBracket.maxKg !== null &&
-          bracket.minKg < prevBracket.maxKg
-        ) {
-          return {
-            valid: false,
-            message: `Overlap between ${prevBracket.minKg}-${prevBracket.maxKg}kg and ${bracket.minKg}-${bracket.maxKg || "∞"}kg`,
-          };
-        }
-      }
-
-      // Only the last bracket can have null maxKg
-      if (bracket.maxKg === null && i !== normalized.length - 1) {
-        return {
-          valid: false,
-          message: "Only the last bracket can have unlimited maximum weight",
-        };
-      }
+    const over =
+      overRaw === "" || overRaw === null || overRaw === undefined
+        ? 0
+        : Number(overRaw);
+    if (!Number.isFinite(over) || over < 0) {
+      return {
+        valid: false,
+        message: "Overage per kg must be a non-negative number",
+      };
     }
 
     return { valid: true };
@@ -226,12 +214,41 @@ const ManagerCommission = () => {
     try {
       setError("");
 
-      // Validate brackets
-      const validation = validateBrackets(form.weightBrackets);
+      const validation = validateRule(form);
       if (!validation.valid) {
-        setError(validation.message);
+        setError(validation.message || "Please fix the commission rule fields.");
         return;
       }
+
+      const min =
+        form.minWeightKg === "" ||
+        form.minWeightKg === null ||
+        form.minWeightKg === undefined
+          ? 0
+          : Number(form.minWeightKg);
+      const hasMax =
+        form.maxWeightKg !== "" &&
+        form.maxWeightKg !== null &&
+        form.maxWeightKg !== undefined;
+      const max = hasMax ? Number(form.maxWeightKg) : null;
+      const flat =
+        form.flatChargePkr === "" ||
+        form.flatChargePkr === null ||
+        form.flatChargePkr === undefined
+          ? 0
+          : Number(form.flatChargePkr);
+      const over =
+        form.overagePerKgPkr === "" ||
+        form.overagePerKgPkr === null ||
+        form.overagePerKgPkr === undefined
+          ? 0
+          : Number(form.overagePerKgPkr);
+      const rc =
+        form.returnCharge === "" ||
+        form.returnCharge === null ||
+        form.returnCharge === undefined
+          ? 0
+          : Number(form.returnCharge) || 0;
 
       // Preserve existing type/value from form but ensure numeric value
       const payload = {
@@ -240,18 +257,11 @@ const ManagerCommission = () => {
           typeof form.value === "number"
             ? form.value
             : Number(form.value) || 0,
-        weightBrackets: form.weightBrackets.map((b) => ({
-          minKg: Number(b.minKg),
-          maxKg:
-            b.maxKg === "" || b.maxKg === null || b.maxKg === undefined
-              ? null
-              : Number(b.maxKg),
-          charge: Number(b.charge),
-        })),
-        returnCharge:
-          form.returnCharge === "" || form.returnCharge === null || form.returnCharge === undefined
-            ? 0
-            : Number(form.returnCharge) || 0,
+        minWeightKg: min,
+        maxWeightKg: max,
+        flatChargePkr: flat,
+        overagePerKgPkr: over,
+        returnCharge: rc,
       };
 
       const res = await fetch(`/api/commission/${selectedShipperId}`, {
@@ -322,42 +332,7 @@ const ManagerCommission = () => {
     }
   };
 
-  const addBracket = () => {
-    const lastBracket = form.weightBrackets[form.weightBrackets.length - 1];
-    const newMinKg =
-      lastBracket && lastBracket.maxKg != null ? lastBracket.maxKg : 0;
-
-    setForm((prev) => ({
-      ...prev,
-      weightBrackets: [
-        ...prev.weightBrackets,
-        { minKg: newMinKg, maxKg: newMinKg + 1, charge: 0 },
-      ],
-    }));
-  };
-
-  const deleteBracket = (index) => {
-    if (form.weightBrackets.length <= 1) {
-      setError("At least one weight bracket is required");
-      return;
-    }
-
-    setForm((prev) => ({
-      ...prev,
-      weightBrackets: prev.weightBrackets.filter((_, i) => i !== index),
-    }));
-  };
-
-  const updateBracket = (index, field, value) => {
-    setForm((prev) => ({
-      ...prev,
-      weightBrackets: prev.weightBrackets.map((bracket, i) =>
-        i === index ? { ...bracket, [field]: value } : bracket,
-      ),
-    }));
-  };
-
-  const validation = validateBrackets(form.weightBrackets);
+  const ruleValidation = validateRule(form);
 
   return (
     <div className="space-y-8">
@@ -396,97 +371,186 @@ const ManagerCommission = () => {
           </div>
         </div>
 
-        {/* Weight-Based Service Charges Section */}
-        <div className="mt-8">
-          <div className="flex items-center justify-between mb-4">
+        {/* Weight-Based Service Charges Section (single rule) */}
+        <div className="mt-8 space-y-4">
+          <div className="flex items-center justify-between">
             <h4 className="text-md font-semibold text-secondary">
-              Weight-Based Service Charges
+              Weight-Based Service Charges (Single Rule)
             </h4>
-            <button
-              onClick={addBracket}
-              className="flex items-center gap-2 px-3 py-1.5 text-sm bg-primary hover:bg-primary-hover text-white rounded-lg"
-            >
-              <Plus className="w-4 h-4" />
-              Add Bracket
-            </button>
+            <span className="text-xs text-gray-500">
+              Configure one base charge and optional overage per extra kg.
+            </span>
           </div>
 
-          <div className="space-y-3">
-            {form.weightBrackets.map((bracket, index) => (
-              <div
-                key={index}
-                className="grid grid-cols-1 md:grid-cols-5 gap-3 items-end p-4 bg-gray-50 rounded-lg"
-              >
-                <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-1">
-                    Min Weight (kg)
-                  </label>
-                  <input
-                    type="number"
-                    step="0.1"
-                    min="0"
-                    value={bracket.minKg || ""}
-                    onChange={(e) =>
-                      updateBracket(index, "minKg", e.target.value)
-                    }
-                    className="w-full px-3 py-2 rounded-lg border border-gray-200 bg-white text-sm"
-                    placeholder="0"
-                  />
-                </div>
-                <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-1">
-                    Max Weight (kg)
-                  </label>
-                  <input
-                    type="number"
-                    step="0.1"
-                    min="0"
-                    value={bracket.maxKg || ""}
-                    onChange={(e) =>
-                      updateBracket(index, "maxKg", e.target.value)
-                    }
-                    className="w-full px-3 py-2 rounded-lg border border-gray-200 bg-white text-sm"
-                    placeholder="Leave empty for ∞"
-                  />
-                </div>
-                <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-1">
-                    Charge (PKR)
-                  </label>
-                  <input
-                    type="number"
-                    min="0"
-                    value={bracket.charge || ""}
-                    onChange={(e) =>
-                      updateBracket(index, "charge", e.target.value)
-                    }
-                    className="w-full px-3 py-2 rounded-lg border border-gray-200 bg-white text-sm"
-                    placeholder="0"
-                  />
-                </div>
-                <div className="text-sm text-gray-600 self-center">
-                  {bracket.minKg || 0}kg - {bracket.maxKg || "∞"}kg
-                </div>
-                <div className="flex justify-end">
-                  <button
-                    onClick={() => deleteBracket(index)}
-                    disabled={form.weightBrackets.length <= 1}
-                    className={`p-2 rounded-lg ${
-                      form.weightBrackets.length <= 1
-                        ? "bg-gray-100 text-gray-400 cursor-not-allowed"
-                        : "bg-red-100 hover:bg-red-200 text-red-600"
-                    }`}
-                  >
-                    <Trash2 className="w-4 h-4" />
-                  </button>
-                </div>
-              </div>
-            ))}
+          <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
+            <div>
+              <label className="block text-sm font-medium text-gray-700 mb-1">
+                Min Weight (kg)
+              </label>
+              <input
+                type="number"
+                step="0.1"
+                min="0"
+                value={form.minWeightKg ?? ""}
+                onChange={(e) =>
+                  setForm((prev) => ({
+                    ...prev,
+                    minWeightKg: e.target.value,
+                  }))
+                }
+                className="w-full px-3 py-2 rounded-lg border border-gray-200 bg-white text-sm"
+                placeholder="0"
+              />
+            </div>
+            <div>
+              <label className="block text-sm font-medium text-gray-700 mb-1">
+                Max Weight (kg)
+              </label>
+              <input
+                type="number"
+                step="0.1"
+                min="0"
+                value={form.maxWeightKg ?? ""}
+                onChange={(e) =>
+                  setForm((prev) => ({
+                    ...prev,
+                    maxWeightKg: e.target.value,
+                  }))
+                }
+                className="w-full px-3 py-2 rounded-lg border border-gray-200 bg-white text-sm"
+                placeholder="Leave empty for ∞"
+              />
+            </div>
+            <div>
+              <label className="block text-sm font-medium text-gray-700 mb-1">
+                Base Charge (PKR)
+              </label>
+              <input
+                type="number"
+                min="0"
+                value={form.flatChargePkr ?? ""}
+                onChange={(e) =>
+                  setForm((prev) => ({
+                    ...prev,
+                    flatChargePkr: e.target.value,
+                  }))
+                }
+                className="w-full px-3 py-2 rounded-lg border border-gray-200 bg-white text-sm"
+                placeholder="e.g. 150"
+              />
+            </div>
+            <div>
+              <label className="block text-sm font-medium text-gray-700 mb-1">
+                Overage per extra kg (PKR)
+              </label>
+              <input
+                type="number"
+                min="0"
+                value={form.overagePerKgPkr ?? ""}
+                onChange={(e) =>
+                  setForm((prev) => ({
+                    ...prev,
+                    overagePerKgPkr: e.target.value,
+                  }))
+                }
+                className="w-full px-3 py-2 rounded-lg border border-gray-200 bg-white text-sm"
+                placeholder="0 for no overage"
+              />
+            </div>
           </div>
 
-          {!validation.valid && (
-            <p className="text-sm text-red-600 mt-2">{validation.message}</p>
+          {ruleValidation && !ruleValidation.valid && (
+            <p className="text-sm text-red-600">{ruleValidation.message}</p>
           )}
+
+          {/* Live preview for a few example weights */}
+          <div className="mt-2 border border-gray-200 rounded-lg p-3 bg-gray-50">
+            <div className="text-xs font-semibold text-secondary mb-2">
+              Live Preview (example weights)
+            </div>
+            <table className="w-full text-xs">
+              <thead>
+                <tr className="text-gray-500">
+                  <th className="py-1 pr-2 text-left">Weight (kg)</th>
+                  <th className="py-1 pr-2 text-right">Charge (PKR)</th>
+                  <th className="py-1 text-right">Note</th>
+                </tr>
+              </thead>
+              <tbody>
+                {[0.5, 1, 3, 5].map((w) => {
+                  const minRaw = form.minWeightKg;
+                  const maxRaw = form.maxWeightKg;
+                  const flatRaw = form.flatChargePkr;
+                  const overRaw = form.overagePerKgPkr;
+
+                  const min =
+                    minRaw === "" ||
+                    minRaw === null ||
+                    minRaw === undefined
+                      ? 0
+                      : Number(minRaw);
+                  const hasMax =
+                    maxRaw !== "" &&
+                    maxRaw !== null &&
+                    maxRaw !== undefined;
+                  const max = hasMax ? Number(maxRaw) : null;
+                  const flat =
+                    flatRaw === "" ||
+                    flatRaw === null ||
+                    flatRaw === undefined
+                      ? 0
+                      : Number(flatRaw);
+                  const over =
+                    overRaw === "" ||
+                    overRaw === null ||
+                    overRaw === undefined
+                      ? 0
+                      : Number(overRaw);
+
+                  let note = "";
+                  let charge = 0;
+
+                  if (
+                    !Number.isFinite(min) ||
+                    (hasMax && !Number.isFinite(max)) ||
+                    !Number.isFinite(flat) ||
+                    !Number.isFinite(over) ||
+                    min < 0 ||
+                    flat < 0 ||
+                    over < 0
+                  ) {
+                    note = "Invalid rule";
+                    charge = 0;
+                  } else if (w < min) {
+                    note = "Below min";
+                    charge = 0;
+                  } else {
+                    let overKg = 0;
+                    if (max !== null && w > max) {
+                      overKg = Math.ceil(w - max);
+                    }
+                    charge = flat + overKg * over;
+                    note =
+                      overKg > 0
+                        ? `Base + ${overKg}kg overage`
+                        : "Base charge";
+                  }
+
+                  return (
+                    <tr key={w}>
+                      <td className="py-1 pr-2 text-left">{w}</td>
+                      <td className="py-1 pr-2 text-right">
+                        {Number.isFinite(charge)
+                          ? Math.max(0, Math.round(charge))
+                          : 0}
+                      </td>
+                      <td className="py-1 text-right text-gray-500">{note}</td>
+                    </tr>
+                  );
+                })}
+              </tbody>
+            </table>
+          </div>
         </div>
 
         <div className="mt-8 max-w-xs">
@@ -514,9 +578,9 @@ const ManagerCommission = () => {
         <div className="flex justify-end gap-3 mt-6">
           <button
             onClick={save}
-            disabled={!validation.valid || !selectedShipperId}
+            disabled={!ruleValidation.valid || !selectedShipperId}
             className={`px-6 py-2 rounded-lg text-sm ${
-              !validation.valid || !selectedShipperId
+              !ruleValidation.valid || !selectedShipperId
                 ? "bg-gray-300 text-gray-500 cursor-not-allowed"
                 : "bg-primary hover:bg-primary-hover text-white"
             }`}
@@ -640,29 +704,44 @@ const ManagerCommission = () => {
             <thead>
               <tr className="text-left text-gray-500">
                 <th className="py-2 px-3">Shipper</th>
-                <th className="py-2 px-3">Weight Brackets</th>
+                <th className="py-2 px-3">Rule</th>
+                <th className="py-2 px-3 text-right">Return Charge</th>
               </tr>
             </thead>
             <tbody className="divide-y divide-gray-100">
-              {configs.map((c) => (
-                <tr key={c._id}>
-                  <td className="py-2 px-3">{c.shipper?.name || c.shipper}</td>
-                  <td className="py-2 px-3">
-                    {c.weightBrackets && c.weightBrackets.length > 0 ? (
-                      <div className="space-y-1">
-                        {c.weightBrackets.map((bracket, i) => (
-                          <div key={i} className="text-xs text-gray-600">
-                            {bracket.minKg}kg - {bracket.maxKg || "∞"}kg: PKR{" "}
-                            {bracket.charge}
-                          </div>
-                        ))}
-                      </div>
-                    ) : (
-                      <span className="text-gray-400">No brackets</span>
-                    )}
-                  </td>
-                </tr>
-              ))}
+              {configs.map((c) => {
+                const flat = Number(c.flatChargePkr || 0);
+                const over = Number(c.overagePerKgPkr || 0);
+                const min =
+                  c.minWeightKg !== null && c.minWeightKg !== undefined
+                    ? Number(c.minWeightKg)
+                    : 0;
+                const max =
+                  c.maxWeightKg !== null && c.maxWeightKg !== undefined
+                    ? Number(c.maxWeightKg)
+                    : null;
+                const hasRule = !!c.hasCommissionRule;
+                const maxLabel =
+                  max === null || Number.isNaN(max) ? "∞" : Number(max);
+
+                let desc = "No rule configured";
+                if (hasRule) {
+                  desc = `From ${Number(min)}kg up to ${maxLabel}kg: PKR ${flat}`;
+                  if (over > 0 && max !== null && !Number.isNaN(max)) {
+                    desc += `, then + PKR ${over} per extra kg`;
+                  }
+                }
+
+                return (
+                  <tr key={c._id}>
+                    <td className="py-2 px-3">{c.shipper?.name || c.shipper}</td>
+                    <td className="py-2 px-3 text-xs text-gray-700">{desc}</td>
+                    <td className="py-2 px-3 text-right text-xs text-gray-700">
+                      PKR {Number(c.returnCharge ?? 0).toLocaleString()}
+                    </td>
+                  </tr>
+                );
+              })}
             </tbody>
           </table>
         </div>
