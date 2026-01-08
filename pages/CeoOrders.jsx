@@ -123,6 +123,13 @@ const CeoOrders = () => {
 
     let list = orders;
 
+    // Normalize selected IDs from <select> (which are strings) to numbers
+    const selectedRiderId =
+      selectedRiderFilter && selectedRiderFilter !== "unassigned"
+        ? Number(selectedRiderFilter)
+        : null;
+    const selectedShipperId = shipperFilter ? Number(shipperFilter) : null;
+
     if (dateRange !== "all") {
       const now = new Date();
       let start = new Date(now);
@@ -162,10 +169,20 @@ const CeoOrders = () => {
 
     if (selectedRiderFilter === "unassigned") {
       list = list.filter((o) => !o.assignedRider);
-    } else if (selectedRiderFilter) {
-      list = list.filter(
-        (o) => o.assignedRider && o.assignedRider._id === selectedRiderFilter,
-      );
+    } else if (
+      selectedRiderId !== null &&
+      Number.isFinite(selectedRiderId) &&
+      !Number.isNaN(selectedRiderId)
+    ) {
+      list = list.filter((o) => {
+        if (!o.assignedRider) return false;
+        const riderValue =
+          typeof o.assignedRider === "object"
+            ? o.assignedRider._id ?? o.assignedRider.id
+            : o.assignedRider;
+        const riderIdNum = Number(riderValue);
+        return Number.isFinite(riderIdNum) && riderIdNum === selectedRiderId;
+      });
     }
 
     if (statusFilter === "PENDING") {
@@ -180,8 +197,20 @@ const CeoOrders = () => {
       list = list.filter((o) => o.status === "RETURNED");
     }
 
-    if (shipperFilter) {
-      list = list.filter((o) => o.shipper && o.shipper._id === shipperFilter);
+    if (
+      selectedShipperId !== null &&
+      Number.isFinite(selectedShipperId) &&
+      !Number.isNaN(selectedShipperId)
+    ) {
+      list = list.filter((o) => {
+        if (!o.shipper) return false;
+        const shipperValue =
+          typeof o.shipper === "object"
+            ? o.shipper._id ?? o.shipper.id
+            : o.shipper;
+        const shipperIdNum = Number(shipperValue);
+        return Number.isFinite(shipperIdNum) && shipperIdNum === selectedShipperId;
+      });
     }
 
     // Search by Booking/Tracking ID (acts as a filter similar to Manager/ Shipper views)
