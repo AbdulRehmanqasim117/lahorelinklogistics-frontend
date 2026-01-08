@@ -1,11 +1,12 @@
-import React, { useEffect, useState } from 'react';
-import { Package } from 'lucide-react';
+import React, { useEffect, useMemo, useState } from 'react';
+import { Package, Search } from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
 
 const RiderHistory = () => {
   const [orders, setOrders] = useState([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState('');
+  const [searchTerm, setSearchTerm] = useState('');
   const token = typeof window !== 'undefined' ? localStorage.getItem('token') : null;
   const navigate = useNavigate();
 
@@ -25,6 +26,25 @@ const RiderHistory = () => {
 
   useEffect(() => { fetchOrders(); }, []);
 
+  const filteredOrders = useMemo(() => {
+    const q = searchTerm.trim().toLowerCase();
+    if (!q) return orders;
+    return orders.filter((o) => {
+      const orderIdDisplay = o.isIntegrated
+        ? o.shopifyOrderNumber ||
+          o.sourceProviderOrderNumber ||
+          o.externalOrderId ||
+          o.bookingId
+        : o.bookingId;
+      const orderIdStr = String(orderIdDisplay || '').toLowerCase();
+      const trackingStr = String(o.trackingId || '').toLowerCase();
+      return (
+        (orderIdStr && orderIdStr.includes(q)) ||
+        (trackingStr && trackingStr.includes(q))
+      );
+    });
+  }, [orders, searchTerm]);
+
   return (
     <div className="space-y-8">
       <div className="bg-white p-6 rounded-xl border border-gray-100 shadow-sm">
@@ -34,14 +54,32 @@ const RiderHistory = () => {
         </div>
       </div>
       <div className="bg-white p-6 rounded-xl border border-gray-100 shadow-sm">
-        {error && <p className="text-sm text-red-600">{error}</p>}
+        <div className="flex items-center justify-between mb-4 gap-3 flex-wrap">
+          <div className="text-sm text-gray-500">
+            Showing {filteredOrders.length} of {orders.length} orders
+          </div>
+          <div className="w-full sm:w-72 relative">
+            <Search className="w-4 h-4 absolute left-3 top-1/2 -translate-y-1/2 text-gray-400" />
+            <input
+              type="text"
+              placeholder="Search by Order ID / Tracking ID"
+              value={searchTerm}
+              onChange={(e) => setSearchTerm(e.target.value)}
+              className="pl-9 pr-3 py-2 text-xs border border-gray-200 rounded-lg w-full focus:outline-none focus:ring-1 focus:ring-green-500 focus:border-green-500"
+            />
+          </div>
+        </div>
+
+        {error && <p className="text-sm text-red-600 mb-2">{error}</p>}
         {loading ? (
           <p className="text-sm text-gray-500">Loading...</p>
         ) : orders.length === 0 ? (
           <p className="text-sm text-gray-500">No orders found.</p>
+        ) : filteredOrders.length === 0 ? (
+          <p className="text-sm text-gray-500">No orders match your search.</p>
         ) : (
           <ul className="space-y-3">
-            {orders.map((o) => {
+            {filteredOrders.map((o) => {
               const orderIdDisplay = o.isIntegrated
                 ? o.shopifyOrderNumber ||
                   o.sourceProviderOrderNumber ||

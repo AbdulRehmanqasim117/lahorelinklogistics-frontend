@@ -387,18 +387,6 @@ const RiderDashboard = () => {
               Refresh
             </button>
           </div>
-          <div className="mb-3">
-            <div className="relative">
-              <Search className="w-4 h-4 absolute left-3 top-1/2 -translate-y-1/2 text-gray-400" />
-              <input
-                value={searchId}
-                onChange={(e) => setSearchId(e.target.value)}
-                type="text"
-                placeholder="Search by Order ID / Tracking ID"
-                className="pl-9 pr-3 py-1.5 text-xs border border-gray-200 rounded-lg w-full"
-              />
-            </div>
-          </div>
           {loading ? (
             <p className="text-sm text-gray-500">Loading...</p>
           ) : mobileFilteredOrders.length === 0 ? (
@@ -451,40 +439,6 @@ const RiderDashboard = () => {
 
   const DesktopDashboardView = () => (
     <div className="space-y-8">
-      <div className="bg-white p-6 rounded-xl border border-gray-100 shadow-sm">
-        <div className="flex items-center justify-between">
-          <div className="flex items-center gap-3">
-            <Truck className="w-6 h-6 text-primary" />
-            <h3 className="text-lg font-bold text-secondary">Rider Dashboard</h3>
-          </div>
-          <div className="flex items-center gap-3">
-            <form onSubmit={lookup} className="relative">
-              <Search className="w-4 h-4 absolute left-3 top-1/2 -translate-y-1/2 text-gray-400" />
-              <input value={searchId} onChange={(e)=>setSearchId(e.target.value)} type="text" placeholder="Search by Order ID / Tracking ID" className="pl-9 pr-4 py-1.5 text-sm border border-gray-200 rounded-lg" />
-              {suggestions.length > 0 && (
-                <ul className="absolute left-0 top-full mt-1 w-72 bg-white border border-gray-200 rounded-lg shadow z-10">
-                  {suggestions.map(s => (
-                    <li key={s._id} className="px-3 py-2 text-sm hover:bg-gray-50 cursor-pointer"
-                        onMouseDown={() => setFound(s)}>
-                      <span className="font-mono text-xs mr-2">{s.isIntegrated
-                        ? s.shopifyOrderNumber ||
-                          s.sourceProviderOrderNumber ||
-                          s.externalOrderId ||
-                          s.bookingId
-                        : s.bookingId}</span>
-                      <span>{s.consigneeName}</span>
-                      <span className="text-xs text-gray-500"> • {s.destinationCity}</span>
-                    </li>
-                  ))}
-                </ul>
-              )}
-            </form>
-            <button onClick={fetchOrders} className="px-3 py-1.5 text-xs bg-gray-50 hover:bg-gray-100 rounded border border-gray-200 text-gray-600">Refresh</button>
-          </div>
-        </div>
-        <p className="text-gray-500 text-sm mt-2">Overview of assigned orders.</p>
-      </div>
-
       <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
         <div className="bg-white p-5 rounded-xl border border-gray-100">
           <p className="text-xs text-gray-500">Today</p>
@@ -539,16 +493,6 @@ const RiderDashboard = () => {
         <div className="p-6">
           <div className="flex items-center justify-between mb-3">
             <h3 className="font-bold text-lg text-secondary">All Orders</h3>
-            <div className="relative w-72">
-              <Search className="w-4 h-4 absolute left-3 top-1/2 -translate-y-1/2 text-gray-400" />
-              <input
-                value={searchId}
-                onChange={(e) => setSearchId(e.target.value)}
-                type="text"
-                placeholder="Search by Order ID / Tracking ID"
-                className="pl-9 pr-3 py-1.5 text-xs border border-gray-200 rounded-lg w-full"
-              />
-            </div>
           </div>
           {error && <p className="text-sm text-red-600">{error}</p>}
           {loading ? (
@@ -577,7 +521,7 @@ const RiderDashboard = () => {
                     <div className="flex justify-between">
                       <span className="font-mono text-xs">
                         {orderIdDisplay}
-                        {o.trackingId ? `  b7 ${o.trackingId}` : ''}
+                        {o.trackingId ? ` • ${o.trackingId}` : ''}
                       </span>
                       <span
                         className={`text-xs px-2 py-0.5 rounded-full ${
@@ -596,7 +540,7 @@ const RiderDashboard = () => {
                     <div className="text-sm text-gray-600 flex items-center gap-2 mt-1">
                       <MapPin className="w-3 h-3" />
                       <span>
-                        {o.consigneeAddress}  b7 {o.destinationCity}
+                        {o.consigneeAddress} • {o.destinationCity}
                       </span>
                     </div>
                     <div className="mt-1 text-xs text-gray-500">

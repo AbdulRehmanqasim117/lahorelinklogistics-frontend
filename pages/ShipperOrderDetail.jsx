@@ -45,6 +45,14 @@ const ShipperOrderDetail = () => {
   if (error) return <div className="p-6 text-red-600 text-sm">{error}</div>;
   if (!order) return null;
 
+  const orderIdDisplay =
+    order.isIntegrated
+      ? order.shopifyOrderNumber ||
+        order.sourceProviderOrderNumber ||
+        order.externalOrderId ||
+        order.bookingId
+      : order.bookingId;
+
   const codText = Number(order.codAmount || 0).toLocaleString();
   const companyCharges = tx ? Number(tx.companyCommission || 0) : 0;
   const netAmount = tx
@@ -58,7 +66,7 @@ const ShipperOrderDetail = () => {
           <Package className="w-6 h-6 text-primary" />
           <div>
             <h3 className="text-lg font-bold text-secondary">
-              Order {order.bookingId}
+              Order {orderIdDisplay}
             </h3>
             <p className="text-xs text-gray-500">
               Service: {order.serviceType}

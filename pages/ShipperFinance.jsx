@@ -47,7 +47,13 @@ const ShipperFinance = () => {
   const [page, setPage] = useState(1);
   const limit = 20;
 
-  const balance = Number(summary?.balance || 0);
+  // Prefer using the ledger totals (which respect current filters) for the
+  // Balance card so that it always matches the visible ledger/journal.
+  const ledgerReceivable = Number(ledger?.totals?.totalReceivable ?? 0);
+  const balance =
+    ledger && ledger.totals != null
+      ? ledgerReceivable
+      : Number(summary?.balance || 0);
   const balanceMeta = useMemo(() => {
     const positive = balance >= 0;
     return {
@@ -238,7 +244,7 @@ const ShipperFinance = () => {
           </div>
           <div className="p-6">
             <div className={`text-4xl font-extrabold tracking-tight ${balanceMeta.colorClass}`}>
-              {loadingSummary ? '—' : formatCurrency(balance)}
+              {loadingLedger && !ledger?.totals ? '—' : formatCurrency(balance)}
             </div>
             <div className="mt-2 text-sm text-gray-500">{balanceMeta.helper}</div>
             <div className="mt-4 text-xs text-gray-500">
