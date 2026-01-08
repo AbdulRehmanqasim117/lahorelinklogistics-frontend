@@ -119,6 +119,19 @@ const RiderDashboard = () => {
     return n.toLocaleString();
   };
 
+  const statusLabel = (s) =>
+    ({
+      CREATED: 'Pending',
+      ASSIGNED: 'In LLL Warehouse',
+      OUT_FOR_DELIVERY: 'Out for Delivery',
+      RETURNED: 'Returned',
+      DELIVERED: 'Delivered',
+      FAILED: 'Failed',
+      FIRST_ATTEMPT: 'First Attempt',
+      SECOND_ATTEMPT: 'Second Attempt',
+      THIRD_ATTEMPT: 'Third Attempt',
+    }[s] || s);
+
   const todayCount = useMemo(
     () =>
       orders.filter(
@@ -322,34 +335,43 @@ const RiderDashboard = () => {
             <p className="text-sm text-gray-500">No assigned orders.</p>
           ) : (
             <ul className="space-y-3">
-              {mobileFilteredOrders.map((o) => (
-                <li
-                  key={o._id}
-                  className="border border-gray-100 rounded-lg p-3 active:bg-gray-50 cursor-pointer"
-                  onClick={() => navigate(`/rider/task/${o._id}`)}
-                >
-                  <div className="flex items-center justify-between gap-2">
-                    <div className="flex-1 min-w-0">
-                      <p className="text-sm font-semibold text-secondary truncate">
-                        {o.consigneeName || 'Customer'}
-                      </p>
-                      <p className="text-xs text-gray-500 truncate">
-                        {o.destinationCity || '—'} 
-                        {o.bookingId ? ` • ${o.bookingId}` : ''}
-                      </p>
+              {mobileFilteredOrders.map((o) => {
+                const orderIdDisplay = o.isIntegrated
+                  ? o.shopifyOrderNumber ||
+                    o.sourceProviderOrderNumber ||
+                    o.externalOrderId ||
+                    o.bookingId
+                  : o.bookingId;
+                return (
+                  <li
+                    key={o._id}
+                    className="border border-gray-100 rounded-lg p-3 active:bg-gray-50 cursor-pointer"
+                    onClick={() => navigate(`/rider/task/${o._id}`)}
+                  >
+                    <div className="flex items-center justify-between gap-2">
+                      <div className="flex-1 min-w-0">
+                        <p className="text-sm font-semibold text-secondary truncate">
+                          {o.consigneeName || 'Customer'}
+                        </p>
+                        <p className="text-xs text-gray-500 truncate">
+                          {o.destinationCity || '—'}
+                          {orderIdDisplay ? ` • ${orderIdDisplay}` : ''}
+                          {o.trackingId ? ` • ${o.trackingId}` : ''}
+                        </p>
+                      </div>
+                      <span className="ml-2 text-xs font-semibold text-primary whitespace-nowrap">
+                        {statusLabel(o.status)}
+                      </span>
                     </div>
-                    <span className="ml-2 text-xs font-semibold text-primary whitespace-nowrap">
-                      {o.status}
-                    </span>
-                  </div>
-                  <div className="mt-1 text-xs text-gray-500">
-                    {o.consigneeAddress}
-                  </div>
-                  <div className="mt-1 text-right text-sm font-semibold text-secondary">
-                    PKR {Number(o.codAmount || 0).toLocaleString()}
-                  </div>
-                </li>
-              ))}
+                    <div className="mt-1 text-xs text-gray-500">
+                      {o.consigneeAddress}
+                    </div>
+                    <div className="mt-1 text-right text-sm font-semibold text-secondary">
+                      PKR {Number(o.codAmount || 0).toLocaleString()}
+                    </div>
+                  </li>
+                );
+              })}
             </ul>
           )}
         </div>
@@ -451,6 +473,12 @@ const RiderDashboard = () => {
               {orders.map((o) => {
                 const isFinal = ['DELIVERED', 'RETURNED', 'FAILED'].includes(o.status);
                 const isExpanded = !!statusExpanded[o._id];
+                const orderIdDisplay = o.isIntegrated
+                  ? o.shopifyOrderNumber ||
+                    o.sourceProviderOrderNumber ||
+                    o.externalOrderId ||
+                    o.bookingId
+                  : o.bookingId;
                 return (
                   <li
                     key={o._id}
@@ -458,7 +486,10 @@ const RiderDashboard = () => {
                     onClick={() => navigate(`/rider/task/${o._id}`)}
                   >
                     <div className="flex justify-between">
-                      <span className="font-mono text-xs">{o.bookingId}</span>
+                      <span className="font-mono text-xs">
+                        {orderIdDisplay}
+                        {o.trackingId ? `  b7 ${o.trackingId}` : ''}
+                      </span>
                       <span
                         className={`text-xs px-2 py-0.5 rounded-full ${
                           o.status === 'DELIVERED'
@@ -470,7 +501,7 @@ const RiderDashboard = () => {
                                 : 'bg-gray-100 text-gray-700'
                         }`}
                       >
-                        {o.status}
+                        {statusLabel(o.status)}
                       </span>
                     </div>
                     <div className="text-sm text-gray-600 flex items-center gap-2 mt-1">
@@ -478,6 +509,9 @@ const RiderDashboard = () => {
                       <span>
                         {o.consigneeAddress}  b7 {o.destinationCity}
                       </span>
+                    </div>
+                    <div className="mt-1 text-xs text-gray-500">
+                      {o.createdAt ? new Date(o.createdAt).toLocaleDateString() : ''}
                     </div>
                     <div className="mt-2 text-right text-sm font-semibold text-secondary">
                       PKR {Number(o.codAmount || 0).toLocaleString()}

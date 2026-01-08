@@ -254,12 +254,22 @@ const ShipperDashboard = () => {
   useEffect(() => {
     const q = search.toLowerCase();
     setFiltered(
-      orders.filter(
-        (o) =>
-          o.bookingId?.toLowerCase().includes(q) ||
+      orders.filter((o) => {
+        const bookingId = o.bookingId || "";
+        const trackingId = o.trackingId || "";
+        const externalOrderNo =
+          o.shopifyOrderNumber ||
+          o.sourceProviderOrderNumber ||
+          o.externalOrderId ||
+          "";
+        return (
+          bookingId.toLowerCase().includes(q) ||
+          trackingId.toLowerCase().includes(q) ||
+          externalOrderNo.toLowerCase().includes(q) ||
           o.consigneeName?.toLowerCase().includes(q) ||
-          o.destinationCity?.toLowerCase().includes(q),
-      ),
+          o.destinationCity?.toLowerCase().includes(q)
+        );
+      }),
     );
   }, [search, orders]);
 
@@ -394,13 +404,22 @@ const ShipperDashboard = () => {
     }
     setSuggestions(
       orders
-        .filter(
-          (o) =>
-            o.bookingId?.toLowerCase().includes(q) ||
-            o.trackingId?.toLowerCase().includes(q) ||
+        .filter((o) => {
+          const bookingId = o.bookingId || "";
+          const trackingId = o.trackingId || "";
+          const externalOrderNo =
+            o.shopifyOrderNumber ||
+            o.sourceProviderOrderNumber ||
+            o.externalOrderId ||
+            "";
+          return (
+            bookingId.toLowerCase().includes(q) ||
+            trackingId.toLowerCase().includes(q) ||
+            externalOrderNo.toLowerCase().includes(q) ||
             o.consigneeName?.toLowerCase().includes(q) ||
-            o.destinationCity?.toLowerCase().includes(q),
-        )
+            o.destinationCity?.toLowerCase().includes(q)
+          );
+        })
         .slice(0, 8),
     );
   }, [searchId, orders]);
@@ -1218,6 +1237,7 @@ const ShipperDashboard = () => {
                     <tr className="text-left text-gray-500">
                       <th className="py-2 px-3">Select</th>
                       <th className="py-2 px-3">Order ID</th>
+                      <th className="py-2 px-3">Tracking ID</th>
                       <th className="py-2 px-3">Source</th>
                       <th className="py-2 px-3">Booking</th>
                       <th className="py-2 px-3">Consignee</th>
@@ -1249,7 +1269,16 @@ const ShipperDashboard = () => {
                           />
                         </td>
                         <td className="py-2 px-3 font-mono text-xs">
-                          {o.bookingId}
+                          {/* Integrated Shopify orders: prefer Shopify/external order number; manual orders: bookingId */}
+                          {o.isIntegrated
+                            ? o.shopifyOrderNumber ||
+                              o.sourceProviderOrderNumber ||
+                              o.externalOrderId ||
+                              o.bookingId
+                            : o.bookingId}
+                        </td>
+                        <td className="py-2 px-3 font-mono text-xs">
+                          {o.trackingId || "d"}
                         </td>
                         <td className="py-2 px-3">{sourceBadge(o)}</td>
                         <td className="py-2 px-3">{bookingBadge(o)}</td>

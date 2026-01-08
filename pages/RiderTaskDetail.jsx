@@ -49,6 +49,13 @@ const RiderTaskDetail = () => {
   const codText = Number(order.codAmount || 0).toLocaleString();
   const isFinal = ['DELIVERED', 'RETURNED', 'FAILED'].includes(order.status);
 
+  const orderIdDisplay = order.isIntegrated
+    ? order.shopifyOrderNumber ||
+      order.sourceProviderOrderNumber ||
+      order.externalOrderId ||
+      order.bookingId
+    : order.bookingId;
+
   return (
     <div className="space-y-6">
       <div className="bg-secondary text-white rounded-2xl p-6 flex items-center justify-between">
@@ -66,7 +73,13 @@ const RiderTaskDetail = () => {
           <div className="flex items-center justify-between">
             <div>
               <h3 className="text-lg font-bold text-secondary">{order.consigneeName}</h3>
-              <p className="text-xs text-gray-500">{order.bookingId}</p>
+              <p className="text-xs text-gray-500">
+                Order ID: <span className="font-mono">{orderIdDisplay}</span>
+              </p>
+              <p className="text-xs text-gray-500">
+                Tracking ID:{' '}
+                <span className="font-mono">{order.trackingId || 'd'}</span>
+              </p>
             </div>
             <Badge status={order.status} />
           </div>

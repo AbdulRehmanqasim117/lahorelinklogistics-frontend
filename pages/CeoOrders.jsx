@@ -107,13 +107,18 @@ const CeoOrders = () => {
     }
     setSuggestions(
       orders
-        .filter(
-          (o) =>
-            o.bookingId?.toLowerCase().includes(q) ||
-            o.trackingId?.toLowerCase().includes(q) ||
+        .filter((o) => {
+          const bookingId = o.bookingId || "";
+          const trackingId = o.trackingId || "";
+          const shopifyOrderNumber = o.shopifyOrderNumber || "";
+          return (
+            bookingId.toLowerCase().includes(q) ||
+            trackingId.toLowerCase().includes(q) ||
+            shopifyOrderNumber.toLowerCase().includes(q) ||
             o.consigneeName?.toLowerCase().includes(q) ||
-            o.destinationCity?.toLowerCase().includes(q),
-        )
+            o.destinationCity?.toLowerCase().includes(q)
+          );
+        })
         .slice(0, 8),
     );
   }, [searchId, orders]);
@@ -216,11 +221,16 @@ const CeoOrders = () => {
     // Search by Booking/Tracking ID (acts as a filter similar to Manager/ Shipper views)
     const q = searchId.trim().toLowerCase();
     if (q) {
-      list = list.filter(
-        (o) =>
-          o.bookingId?.toLowerCase().includes(q) ||
-          o.trackingId?.toLowerCase().includes(q),
-      );
+      list = list.filter((o) => {
+        const bookingId = o.bookingId || "";
+        const trackingId = o.trackingId || "";
+        const shopifyOrderNumber = o.shopifyOrderNumber || "";
+        return (
+          bookingId.toLowerCase().includes(q) ||
+          trackingId.toLowerCase().includes(q) ||
+          shopifyOrderNumber.toLowerCase().includes(q)
+        );
+      });
     }
 
     return list;
@@ -363,19 +373,27 @@ const CeoOrders = () => {
               </select>
               {suggestions.length > 0 && (
                 <ul className="absolute left-0 top-full mt-1 w-full sm:w-80 bg-white border border-gray-200 rounded-lg shadow z-10">
-                  {suggestions.map((s) => (
-                    <li
-                      key={s._id}
-                      className="px-3 py-2 text-sm hover:bg-gray-50 cursor-pointer"
-                      onMouseDown={() => {
-                        navigate(`${baseOrderDetailPath}/${s._id}`);
-                      }}
-                    >
-                      <span className="font-mono text-xs mr-2">{s.bookingId}</span>
-                      <span>{s.consigneeName}</span>
-                      <span className="text-xs text-gray-500"> · {s.destinationCity}</span>
-                    </li>
-                  ))}
+                  {suggestions.map((s) => {
+                    const orderIdDisplay = s.isIntegrated
+                      ? s.shopifyOrderNumber ||
+                        s.sourceProviderOrderNumber ||
+                        s.externalOrderId ||
+                        s.bookingId
+                      : s.bookingId;
+                    return (
+                      <li
+                        key={s._id}
+                        className="px-3 py-2 text-sm hover:bg-gray-50 cursor-pointer"
+                        onMouseDown={() => {
+                          navigate(`${baseOrderDetailPath}/${s._id}`);
+                        }}
+                      >
+                        <span className="font-mono text-xs mr-2">{orderIdDisplay}</span>
+                        <span>{s.consigneeName}</span>
+                        <span className="text-xs text-gray-500"> · {s.destinationCity}</span>
+                      </li>
+                    );
+                  })}
                 </ul>
               )}
             </form>
@@ -394,6 +412,7 @@ const CeoOrders = () => {
                   <tr className="text-left text-gray-500">
                     <th className="py-2 px-3">Shipper</th>
                     <th className="py-2 px-3">Order ID</th>
+                    <th className="py-2 px-3">Tracking ID</th>
                     <th className="py-2 px-3">Source</th>
                     <th className="py-2 px-3">Booking</th>
                     <th className="py-2 px-3">Consignee</th>
@@ -416,7 +435,15 @@ const CeoOrders = () => {
                         {o.shipper?.companyName || o.shipper?.name || "Unknown"}
                       </td>
                       <td className="py-2 px-3 font-mono text-xs">
-                        {o.bookingId || o.trackingId || "-"}
+                        {o.isIntegrated
+                          ? o.shopifyOrderNumber ||
+                            o.sourceProviderOrderNumber ||
+                            o.externalOrderId ||
+                            o.bookingId
+                          : o.bookingId}
+                      </td>
+                      <td className="py-2 px-3 font-mono text-xs">
+                        {o.trackingId || "-"}
                       </td>
                       <td className="py-2 px-3">{sourceBadge(o)}</td>
                       <td className="py-2 px-3">{bookingBadge(o)}</td>

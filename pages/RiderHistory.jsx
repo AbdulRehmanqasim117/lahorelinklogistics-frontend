@@ -41,23 +41,33 @@ const RiderHistory = () => {
           <p className="text-sm text-gray-500">No orders found.</p>
         ) : (
           <ul className="space-y-3">
-            {orders.map((o) => (
-              <li
-                key={o._id}
-                className="border border-gray-100 rounded-lg p-4 flex items-center justify-between active:bg-gray-50 cursor-pointer"
-                onClick={() => navigate(`/rider/task/${o._id}`)}
-              >
-                <div className="flex-1 min-w-0">
-                  <p className="text-sm text-gray-700 truncate">
-                    {o.consigneeName || 'Customer'} • {o.destinationCity || '—'}
-                  </p>
-                  {o.bookingId && (
-                    <p className="text-xs text-gray-400 font-mono truncate">{o.bookingId}</p>
-                  )}
-                </div>
-                <span className="ml-2 text-xs font-semibold text-primary whitespace-nowrap">{o.status}</span>
-              </li>
-            ))}
+            {orders.map((o) => {
+              const orderIdDisplay = o.isIntegrated
+                ? o.shopifyOrderNumber ||
+                  o.sourceProviderOrderNumber ||
+                  o.externalOrderId ||
+                  o.bookingId
+                : o.bookingId;
+              return (
+                <li
+                  key={o._id}
+                  className="border border-gray-100 rounded-lg p-4 flex items-center justify-between active:bg-gray-50 cursor-pointer"
+                  onClick={() => navigate(`/rider/task/${o._id}`)}
+                >
+                  <div className="flex-1 min-w-0">
+                    <p className="text-sm text-gray-700 truncate">
+                      {o.consigneeName || 'Customer'} • {o.destinationCity || '—'}
+                    </p>
+                    {orderIdDisplay && (
+                      <p className="text-xs text-gray-400 font-mono truncate">
+                        {orderIdDisplay}
+                      </p>
+                    )}
+                  </div>
+                  <span className="ml-2 text-xs font-semibold text-primary whitespace-nowrap">{o.status}</span>
+                </li>
+              );
+            })}
           </ul>
         )}
       </div>

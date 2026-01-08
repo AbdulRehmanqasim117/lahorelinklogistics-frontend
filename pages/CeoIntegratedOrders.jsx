@@ -41,8 +41,15 @@ const CeoIntegratedOrders = () => {
     const q = search.trim().toLowerCase();
     if (!q) return orders;
     return orders.filter((o) => {
+      const orderIdDisplay = o.isIntegrated
+        ? o.shopifyOrderNumber ||
+          o.sourceProviderOrderNumber ||
+          o.externalOrderId ||
+          o.bookingId
+        : o.bookingId;
+
       return (
-        String(o?.bookingId || "").toLowerCase().includes(q) ||
+        String(orderIdDisplay || "").toLowerCase().includes(q) ||
         String(o?.consigneeName || "").toLowerCase().includes(q) ||
         String(o?.destinationCity || "").toLowerCase().includes(q) ||
         String(o?.shipper?.companyName || o?.shipper?.name || "")
@@ -174,10 +181,17 @@ const CeoIntegratedOrders = () => {
                   {filtered.map((o) => {
                     const disabled = !!actionLoading[o._id];
                     const cod = Number(o?.codAmount || 0);
+                    const orderIdDisplay = o.isIntegrated
+                      ? o.shopifyOrderNumber ||
+                        o.sourceProviderOrderNumber ||
+                        o.externalOrderId ||
+                        o.bookingId
+                      : o.bookingId;
+
                     return (
                       <tr key={o._id} className="border-t border-gray-100">
                         <td className="py-2 px-3 font-mono text-xs">
-                          {o.bookingId}
+                          {orderIdDisplay}
                         </td>
                         <td className="py-2 px-3 text-xs text-gray-700">
                           {o.shipper?.companyName || o.shipper?.name || "—"}
