@@ -81,18 +81,33 @@ const RiderDashboard = () => {
   useEffect(() => { fetchOrders(); fetchFinance(); }, []);
   const navigate = useNavigate();
 
+  const searchText = searchId.trim().toLowerCase();
+
   useEffect(() => {
-    const q = searchId.trim().toLowerCase();
-    if (q.length < 2) { setSuggestions([]); return; }
+    if (searchText.length < 2) { setSuggestions([]); return; }
     setSuggestions(
-      orders.filter(o =>
-        o.bookingId?.toLowerCase().includes(q) ||
-        o.trackingId?.toLowerCase().includes(q) ||
-        o.consigneeName?.toLowerCase().includes(q) ||
-        o.destinationCity?.toLowerCase().includes(q)
-      ).slice(0, 8)
+      orders
+        .filter((o) => {
+          const orderIdDisplay = o.isIntegrated
+            ? o.shopifyOrderNumber ||
+              o.sourceProviderOrderNumber ||
+              o.externalOrderId ||
+              o.bookingId
+            : o.bookingId;
+          const orderIdStr = String(orderIdDisplay || '').toLowerCase();
+          const trackingStr = String(o.trackingId || '').toLowerCase();
+          const consigneeStr = String(o.consigneeName || '').toLowerCase();
+          const destStr = String(o.destinationCity || '').toLowerCase();
+          return (
+            (orderIdStr && orderIdStr.includes(searchText)) ||
+            (trackingStr && trackingStr.includes(searchText)) ||
+            (consigneeStr && consigneeStr.includes(searchText)) ||
+            (destStr && destStr.includes(searchText))
+          );
+        })
+        .slice(0, 8),
     );
-  }, [searchId, orders]);
+  }, [searchText, orders]);
 
   const updateStatus = async (orderId, status) => {
     try {
@@ -189,9 +204,23 @@ const RiderDashboard = () => {
     return orders.filter((o) => {
       const d = new Date(o.createdAt);
       d.setHours(0, 0, 0, 0);
-      return d.getTime() >= startDate.getTime();
+      const inPeriod = d.getTime() >= startDate.getTime();
+      if (!inPeriod) return false;
+      if (!searchText) return true;
+      const orderIdDisplay = o.isIntegrated
+        ? o.shopifyOrderNumber ||
+          o.sourceProviderOrderNumber ||
+          o.externalOrderId ||
+          o.bookingId
+        : o.bookingId;
+      const orderIdStr = String(orderIdDisplay || '').toLowerCase();
+      const trackingStr = String(o.trackingId || '').toLowerCase();
+      return (
+        (orderIdStr && orderIdStr.includes(searchText)) ||
+        (trackingStr && trackingStr.includes(searchText))
+      );
     });
-  }, [orders, mobilePeriod]);
+  }, [orders, mobilePeriod, searchText]);
 
   const mobileDeliveredCount = useMemo(
     () => mobileFilteredOrders.filter((o) => o.status === 'DELIVERED').length,
@@ -223,6 +252,27 @@ const RiderDashboard = () => {
       mobileFilteredOrders.filter((o) => !['DELIVERED', 'RETURNED'].includes(o.status))
         .length,
     [mobileFilteredOrders],
+  );
+
+  const desktopFilteredOrders = useMemo(
+    () => {
+      if (!searchText) return orders;
+      return orders.filter((o) => {
+        const orderIdDisplay = o.isIntegrated
+          ? o.shopifyOrderNumber ||
+            o.sourceProviderOrderNumber ||
+            o.externalOrderId ||
+            o.bookingId
+          : o.bookingId;
+        const orderIdStr = String(orderIdDisplay || '').toLowerCase();
+        const trackingStr = String(o.trackingId || '').toLowerCase();
+        return (
+          (orderIdStr && orderIdStr.includes(searchText)) ||
+          (trackingStr && trackingStr.includes(searchText))
+        );
+      });
+    },
+    [orders, searchText],
   );
 
   const MobileDashboardView = () => (
@@ -328,7 +378,27 @@ const RiderDashboard = () => {
 
       <div className="bg-white rounded-xl border border-gray-100 shadow-sm">
         <div className="p-4">
-          <h3 className="font-bold text-base text-secondary mb-3">All Orders</h3>
+          <div className="flex items-center justify-between mb-3">
+            <h3 className="font-bold text-base text-secondary">All Orders</h3>
+            <button
+              onClick={fetchOrders}
+              className="px-2 py-1 text-[11px] bg-gray-50 hover:bg-gray-100 rounded border border-gray-200 text-gray-600"
+            >
+              Refresh
+            </button>
+          </div>
+          <div className="mb-3">
+            <div className="relative">
+              <Search className="w-4 h-4 absolute left-3 top-1/2 -translate-y-1/2 text-gray-400" />
+              <input
+                value={searchId}
+                onChange={(e) => setSearchId(e.target.value)}
+                type="text"
+                placeholder="Search by Order ID / Tracking ID"
+                className="pl-9 pr-3 py-1.5 text-xs border border-gray-200 rounded-lg w-full"
+              />
+            </div>
+          </div>
           {loading ? (
             <p className="text-sm text-gray-500">Loading...</p>
           ) : mobileFilteredOrders.length === 0 ? (
@@ -390,13 +460,18 @@ const RiderDashboard = () => {
           <div className="flex items-center gap-3">
             <form onSubmit={lookup} className="relative">
               <Search className="w-4 h-4 absolute left-3 top-1/2 -translate-y-1/2 text-gray-400" />
-              <input value={searchId} onChange={(e)=>setSearchId(e.target.value)} type="text" placeholder="Enter Booking/Tracking ID" className="pl-9 pr-4 py-1.5 text-sm border border-gray-200 rounded-lg" />
+              <input value={searchId} onChange={(e)=>setSearchId(e.target.value)} type="text" placeholder="Search by Order ID / Tracking ID" className="pl-9 pr-4 py-1.5 text-sm border border-gray-200 rounded-lg" />
               {suggestions.length > 0 && (
                 <ul className="absolute left-0 top-full mt-1 w-72 bg-white border border-gray-200 rounded-lg shadow z-10">
                   {suggestions.map(s => (
                     <li key={s._id} className="px-3 py-2 text-sm hover:bg-gray-50 cursor-pointer"
                         onMouseDown={() => setFound(s)}>
-                      <span className="font-mono text-xs mr-2">{s.bookingId}</span>
+                      <span className="font-mono text-xs mr-2">{s.isIntegrated
+                        ? s.shopifyOrderNumber ||
+                          s.sourceProviderOrderNumber ||
+                          s.externalOrderId ||
+                          s.bookingId
+                        : s.bookingId}</span>
                       <span>{s.consigneeName}</span>
                       <span className="text-xs text-gray-500"> • {s.destinationCity}</span>
                     </li>
@@ -462,15 +537,29 @@ const RiderDashboard = () => {
 
       <div className="bg-white rounded-xl border border-gray-100 shadow-sm">
         <div className="p-6">
-          <h3 className="font-bold text-lg text-secondary mb-3">All Orders</h3>
+          <div className="flex items-center justify-between mb-3">
+            <h3 className="font-bold text-lg text-secondary">All Orders</h3>
+            <div className="relative w-72">
+              <Search className="w-4 h-4 absolute left-3 top-1/2 -translate-y-1/2 text-gray-400" />
+              <input
+                value={searchId}
+                onChange={(e) => setSearchId(e.target.value)}
+                type="text"
+                placeholder="Search by Order ID / Tracking ID"
+                className="pl-9 pr-3 py-1.5 text-xs border border-gray-200 rounded-lg w-full"
+              />
+            </div>
+          </div>
           {error && <p className="text-sm text-red-600">{error}</p>}
           {loading ? (
             <p className="text-sm text-gray-500">Loading...</p>
           ) : orders.length === 0 ? (
             <p className="text-sm text-gray-500">No assigned orders.</p>
+          ) : desktopFilteredOrders.length === 0 ? (
+            <p className="text-sm text-gray-500">No orders match your search.</p>
           ) : (
             <ul className="space-y-3">
-              {orders.map((o) => {
+              {desktopFilteredOrders.map((o) => {
                 const isFinal = ['DELIVERED', 'RETURNED', 'FAILED'].includes(o.status);
                 const isExpanded = !!statusExpanded[o._id];
                 const orderIdDisplay = o.isIntegrated

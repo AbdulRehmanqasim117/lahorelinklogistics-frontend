@@ -313,12 +313,13 @@ const ShipperFinance = () => {
         </div>
 
         <div className="overflow-x-auto">
-          <table className="min-w-[900px] md:min-w-full text-sm">
+          <table className="min-w-[980px] md:min-w-full text-sm">
             <thead>
               <tr className="text-left text-gray-500 border-b bg-gray-50">
                 <th className="py-3 px-4">Date/Time</th>
                 <th className="py-3 px-4">Particular</th>
                 <th className="py-3 px-4">Booking ID</th>
+                <th className="py-3 px-4">Status</th>
                 <th className="py-3 px-4 text-right">Weight (kg)</th>
                 <th className="py-3 px-4 text-right">COD Amount</th>
                 <th className="py-3 px-4 text-right">Service Charges</th>
@@ -328,18 +329,37 @@ const ShipperFinance = () => {
             </thead>
             <tbody className="divide-y divide-gray-100">
               {loadingLedger ? (
-                <tr><td colSpan={8} className="py-10 px-4 text-center text-gray-500">Loading transactions…</td></tr>
+                <tr><td colSpan={9} className="py-10 px-4 text-center text-gray-500">Loading transactions…</td></tr>
               ) : (ledger?.rows || []).length === 0 ? (
-                <tr><td colSpan={8} className="py-10 px-4 text-center text-gray-500">No transactions found</td></tr>
+                <tr><td colSpan={9} className="py-10 px-4 text-center text-gray-500">No transactions found</td></tr>
               ) : (
                 (ledger.rows || []).map((r) => {
                   const receivable = Number(r.receivable ?? r.amount ?? 0);
                   const weightStr = formatWeight(r.weightKg);
+                  const rawStatus = r.orderStatus || '';
+                  const statusLabel = rawStatus || '—';
+                  const statusColor =
+                    rawStatus === 'DELIVERED'
+                      ? 'bg-green-100 text-green-700'
+                      : rawStatus === 'RETURNED'
+                        ? 'bg-red-100 text-red-700'
+                        : rawStatus === 'FAILED'
+                          ? 'bg-red-100 text-red-700'
+                          : rawStatus === 'OUT_FOR_DELIVERY'
+                            ? 'bg-blue-100 text-blue-700'
+                            : rawStatus
+                                ? 'bg-gray-100 text-gray-700'
+                                : 'bg-gray-50 text-gray-400';
                   return (
                     <tr key={r._id} className="hover:bg-gray-50">
                       <td className="py-3 px-4 text-xs text-gray-600">{formatDateTime(r.date)}</td>
                       <td className="py-3 px-4">{r.particular || '—'}</td>
                       <td className="py-3 px-4 font-mono text-xs">{r.bookingId || '—'}</td>
+                      <td className="py-3 px-4">
+                        <span className={`inline-flex items-center px-2 py-0.5 text-[11px] font-medium rounded-full ${statusColor}`}>
+                          {statusLabel}
+                        </span>
+                      </td>
                       <td className="py-3 px-4 text-right">{weightStr ?? 'N/A'}</td>
                       <td className="py-3 px-4 text-right">{formatCurrency(r.codAmount ?? 0)}</td>
                       <td className="py-3 px-4 text-right">{formatCurrency(r.serviceCharges ?? 0)}</td>

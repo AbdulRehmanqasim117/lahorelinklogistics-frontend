@@ -93,6 +93,15 @@ const LabelPrint = () => {
     const customerAddress = labelData.consignee?.address || "N/A";
     const destination = labelData.consignee?.destinationCity || "N/A";
     const bookingId = labelData.bookingId || "N/A";
+    const isIntegrated =
+      typeof labelData.isIntegrated === "boolean"
+        ? labelData.isIntegrated
+        : !!labelData.order?.isIntegrated;
+    const shopifyOrderNumber =
+      labelData.shopifyOrderNumber || labelData.order?.shopifyOrderNumber || null;
+    const displayOrderNumber =
+      labelData.displayOrderNumber ||
+      (isIntegrated ? shopifyOrderNumber || bookingId : bookingId);
     const shipperName = labelData.shipper?.name || "N/A";
     const shipperAddress =
       labelData.shipper?.address || labelData.shipper?.companyName || "N/A";
@@ -142,10 +151,10 @@ const LabelPrint = () => {
 
               <div className="border-t border-black my-1"></div>
               <div className="mt-2">
-                <span className="font-bold">Order: {bookingId}</span>
+                <span className="font-bold">Order: {displayOrderNumber}</span>
                 <div className="mt-1 w-3/4">
                   <Barcode
-                    value={String(bookingId).replace(/[^0-9]/g, "")}
+                    value={String(displayOrderNumber).replace(/[^0-9]/g, "")}
                     height="h-6"
                     showValue={false}
                   />
