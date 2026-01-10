@@ -245,29 +245,37 @@ const CeoCompanyFinance = () => {
   const totals = useMemo(() => {
     const m = companyMetrics || {};
 
-    const totalOrders = Number(m.ordersCount || 0);
-    const totalCod = Number(m.totalCod || 0);
-    const totalServiceCharges = Number(m.totalServiceCharges || 0);
-    const totalCompanyCommission = Number(m.totalCompanyCommission || 0);
-    const companyEarnings = totalServiceCharges + totalCompanyCommission;
-    const companyProfit = Number(m.companyProfit || 0);
+    const ordersCount = Number(m.ordersCount || 0);
+
+    const codCollected = Number(
+      m.codCollected ?? m.totalCod ?? 0,
+    );
+
+    const serviceChargesTotal = Number(
+      m.serviceChargesTotal ?? m.totalServiceCharges ?? 0,
+    );
+
+    const riderPayoutTotal = Number(
+      m.riderPayoutTotal ?? m.totalRiderPaid ?? 0,
+    );
+
+    const netProfit = Number(
+      m.netProfit ?? m.companyProfit ?? serviceChargesTotal - riderPayoutTotal,
+    );
 
     const deliveredOrders = Number(m.deliveredOrders || 0);
     const returnedOrders = Number(m.returnedOrders || 0);
 
-    const totalAmount = Number(m.totalAmount || totalCod + totalServiceCharges);
     const unpaidRiderBalances = Number(m.unpaidRiderBalances || 0);
 
     return {
-      totalOrders,
-      totalCod,
-      totalServiceCharges,
-      totalCompanyCommission,
-      companyEarnings,
-      companyProfit,
+      ordersCount,
+      codCollected,
+      serviceChargesTotal,
+      riderPayoutTotal,
+      netProfit,
       deliveredOrders,
       returnedOrders,
-      totalAmount,
       unpaidRiderBalances,
     };
   }, [companyMetrics]);
@@ -408,26 +416,41 @@ const CeoCompanyFinance = () => {
         <div className="bg-white p-5 rounded-xl border border-gray-100 shadow-sm">
           <div className="text-xs text-gray-500">Orders</div>
           <div className="mt-1 text-2xl font-bold text-secondary">
-            {loading ? "..." : totals.totalOrders}
+            {loading ? "..." : totals.ordersCount}
           </div>
         </div>
         <div className="bg-white p-5 rounded-xl border border-gray-100 shadow-sm">
-          <div className="text-xs text-gray-500">Total COD</div>
+          <div className="text-xs text-gray-500">Company Revenue (Service Charges)</div>
           <div className="mt-1 text-xl font-bold text-secondary">
-            {loading ? "..." : formatCurrency(totals.totalCod)}
+            {loading ? "..." : formatCurrency(totals.serviceChargesTotal)}
           </div>
         </div>
         <div className="bg-white p-5 rounded-xl border border-gray-100 shadow-sm">
-          <div className="text-xs text-gray-500">Service Charges</div>
+          <div className="text-xs text-gray-500">Rider Payout (Expense)</div>
           <div className="mt-1 text-xl font-bold text-secondary">
-            {loading ? "..." : formatCurrency(totals.totalServiceCharges)}
+            {loading ? "..." : formatCurrency(totals.riderPayoutTotal)}
           </div>
         </div>
         <div className="bg-white p-5 rounded-xl border border-gray-100 shadow-sm">
-          <div className="text-xs text-gray-500">Company Earnings</div>
+          <div className="text-xs text-gray-500">Net Company Profit</div>
           <div className="mt-1 text-xl font-bold text-secondary">
-            {loading ? "..." : formatCurrency(totals.companyEarnings)}
+            {loading ? "..." : formatCurrency(totals.netProfit)}
           </div>
+        </div>
+      </div>
+
+      <div className="text-xs text-gray-500 mt-2">
+        <div className="inline-flex items-center gap-1">
+          <span>COD Collected (Shipper Funds):</span>
+          <span className="font-semibold text-secondary">
+            {loading ? "..." : formatCurrency(totals.codCollected)}
+          </span>
+          <span
+            className="text-[10px] text-gray-400 border border-gray-300 rounded-full px-1 cursor-default"
+            title="This is collected for shippers, not company income."
+          >
+            ?
+          </span>
         </div>
       </div>
 
@@ -450,9 +473,17 @@ const CeoCompanyFinance = () => {
             </div>
           </div>
           <div className="border border-gray-100 rounded-xl px-4 py-3">
-            <div className="text-xs text-gray-500">Total Amount (COD + Charges)</div>
+            <div className="text-xs text-gray-500 flex items-center gap-1">
+              <span>COD Collected (Shipper Funds)</span>
+              <span
+                className="text-[10px] text-gray-400 border border-gray-300 rounded-full px-1 cursor-default"
+                title="This is collected for shippers, not company income."
+              >
+                ?
+              </span>
+            </div>
             <div className="mt-1 text-xl font-bold text-secondary">
-              {loading ? "..." : formatCurrency(totals.totalAmount)}
+              {loading ? "..." : formatCurrency(totals.codCollected)}
             </div>
           </div>
         </div>
@@ -709,15 +740,17 @@ const CeoCompanyFinance = () => {
                   </span>
                 </div>
                 <div className="flex items-center justify-between">
-                  <span>Total COD</span>
-                  <span className="font-semibold text-secondary">
-                    {formatCurrency(ledgerTotals?.totalCod || 0)}
+                  <span className="flex items-center gap-1">
+                    <span>COD Collected (Shipper Funds)</span>
+                    <span
+                      className="text-[9px] text-gray-400 border border-gray-300 rounded-full px-1 cursor-default"
+                      title="This is collected for shippers, not company income."
+                    >
+                      ?
+                    </span>
                   </span>
-                </div>
-                <div className="flex items-center justify-between">
-                  <span>Service Charges</span>
                   <span className="font-semibold text-secondary">
-                    {formatCurrency(ledgerTotals?.totalServiceCharges || 0)}
+                    {formatCurrency(ledgerTotals?.codCollected || 0)}
                   </span>
                 </div>
                 <div className="flex items-center justify-between">

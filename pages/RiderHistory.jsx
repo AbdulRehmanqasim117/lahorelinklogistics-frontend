@@ -1,5 +1,5 @@
 import React, { useEffect, useMemo, useState } from 'react';
-import { Package, Search } from 'lucide-react';
+import { Package, Search, MapPin } from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
 
 const RiderHistory = () => {
@@ -25,6 +25,19 @@ const RiderHistory = () => {
   };
 
   useEffect(() => { fetchOrders(); }, []);
+
+  const statusLabel = (s) =>
+    ({
+      CREATED: 'Pending',
+      ASSIGNED: 'In LLL Warehouse',
+      OUT_FOR_DELIVERY: 'Out for Delivery',
+      RETURNED: 'Returned',
+      DELIVERED: 'Delivered',
+      FAILED: 'Failed',
+      FIRST_ATTEMPT: 'First Attempt',
+      SECOND_ATTEMPT: 'Second Attempt',
+      THIRD_ATTEMPT: 'Third Attempt',
+    }[s] || s);
 
   const filteredOrders = useMemo(() => {
     const q = searchTerm.trim().toLowerCase();
@@ -89,20 +102,40 @@ const RiderHistory = () => {
               return (
                 <li
                   key={o._id}
-                  className="border border-gray-100 rounded-lg p-4 flex items-center justify-between active:bg-gray-50 cursor-pointer"
+                  className="border border-gray-100 rounded-lg p-4 cursor-pointer hover:bg-gray-50"
                   onClick={() => navigate(`/rider/task/${o._id}`)}
                 >
-                  <div className="flex-1 min-w-0">
-                    <p className="text-sm text-gray-700 truncate">
-                      {o.consigneeName || 'Customer'} • {o.destinationCity || '—'}
-                    </p>
-                    {orderIdDisplay && (
-                      <p className="text-xs text-gray-400 font-mono truncate">
-                        {orderIdDisplay}
-                      </p>
-                    )}
+                  <div className="flex justify-between">
+                    <span className="font-mono text-xs">
+                      {orderIdDisplay}
+                      {o.trackingId ? ` • ${o.trackingId}` : ''}
+                    </span>
+                    <span
+                      className={`text-xs px-2 py-0.5 rounded-full ${
+                        o.status === 'DELIVERED'
+                          ? 'bg-green-100 text-green-800'
+                          : o.status === 'RETURNED'
+                            ? 'bg-red-100 text-red-800'
+                            : o.status === 'OUT_FOR_DELIVERY'
+                              ? 'bg-blue-100 text-blue-800'
+                              : 'bg-gray-100 text-gray-700'
+                      }`}
+                    >
+                      {statusLabel(o.status)}
+                    </span>
                   </div>
-                  <span className="ml-2 text-xs font-semibold text-primary whitespace-nowrap">{o.status}</span>
+                  <div className="text-sm text-gray-600 flex items-center gap-2 mt-1">
+                    <MapPin className="w-3 h-3" />
+                    <span>
+                      {o.consigneeAddress} • {o.destinationCity}
+                    </span>
+                  </div>
+                  <div className="mt-1 text-xs text-gray-500">
+                    {o.createdAt ? new Date(o.createdAt).toLocaleDateString() : ''}
+                  </div>
+                  <div className="mt-2 text-right text-sm font-semibold text-secondary">
+                    PKR {Number(o.codAmount || 0).toLocaleString()}
+                  </div>
                 </li>
               );
             })}
