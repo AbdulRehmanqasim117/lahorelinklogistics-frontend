@@ -16,6 +16,28 @@ import {
 import { useAuth } from '../src/contexts/AuthContext';
 import { getToken } from '../src/utils/auth';
 
+// Normalize any stored logo URL so the frontend always uses the
+// API-based logo endpoint instead of direct /uploads paths. This is
+// important in development where the React dev server runs on
+// localhost:3000 and would otherwise try to serve /uploads from the
+// frontend instead of the Node API.
+const resolveLogoUrlClient = (url) => {
+  if (!url) return '';
+
+  const asString = String(url);
+
+  // Legacy values stored as /uploads/company/filename (or without the
+  // leading slash) should be mapped to the API logo route.
+  if (asString.startsWith('/uploads/company/') || asString.startsWith('uploads/company/')) {
+    const parts = asString.split('/');
+    const filename = parts[parts.length - 1];
+    if (!filename) return '';
+    return `/api/company-profile/logo/${filename}`;
+  }
+
+  return asString;
+};
+
 const CeoCompanyProfile = () => {
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
@@ -71,8 +93,12 @@ const CeoCompanyProfile = () => {
       }
 
       if (data.success && data.data) {
-        setProfileData(data.data);
-        setLogoPreview(data.data.logoUrl || '');
+        const apiLogoUrl = resolveLogoUrlClient(data.data.logoUrl || '');
+        setProfileData({
+          ...data.data,
+          logoUrl: apiLogoUrl,
+        });
+        setLogoPreview(apiLogoUrl);
       }
     } catch (err) {
       console.error('Error loading profile:', err);
@@ -179,7 +205,7 @@ const CeoCompanyProfile = () => {
       }
 
       if (data.success) {
-        const newLogoUrl = data.data.logoUrl;
+        const newLogoUrl = resolveLogoUrlClient(data.data.logoUrl);
         setProfileData(prev => ({ ...prev, logoUrl: newLogoUrl }));
         setLogoPreview(newLogoUrl);
         setSuccess('Logo uploaded successfully!');
