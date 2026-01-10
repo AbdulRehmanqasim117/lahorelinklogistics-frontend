@@ -100,6 +100,32 @@ const CeoDashboard = () => {
     });
   }, [orders]);
 
+  const recentActivity = useMemo(
+    () =>
+      orders
+        .flatMap((o) => {
+          const history =
+            Array.isArray(o.statusHistory) && o.statusHistory.length
+              ? o.statusHistory
+              : [
+                  {
+                    status: o.status,
+                    timestamp: o.updatedAt || o.createdAt,
+                  },
+                ];
+
+          return history.map((h) => ({
+            bookingId: o.bookingId,
+            status: h.status,
+            time: h.timestamp,
+          }));
+        })
+        .filter((e) => e.time)
+        .sort((a, b) => new Date(b.time) - new Date(a.time))
+        .slice(0, 5),
+    [orders],
+  );
+
   const svgPath = useMemo(() => {
     const width = 600;
     const height = 160;
@@ -441,22 +467,22 @@ const CeoDashboard = () => {
               </tr>
             </thead>
             <tbody className="divide-y divide-gray-100">
-              {orders
-                .flatMap(o => (o.statusHistory || []).map(h => ({
-                  bookingId: o.bookingId,
-                  status: h.status,
-                  time: h.timestamp
-                })))
-                .sort((a,b) => new Date(b.time) - new Date(a.time))
-                .slice(0,5)
-                .map((e, idx) => (
+              {recentActivity.length === 0 ? (
+                <tr>
+                  <td className="py-2 px-3 text-xs text-gray-500" colSpan={4}>
+                    No recent activity.
+                  </td>
+                </tr>
+              ) : (
+                recentActivity.map((e, idx) => (
                   <tr key={idx}>
                     <td className="py-2 px-3">{e.bookingId}</td>
                     <td className="py-2 px-3">{e.status}</td>
                     <td className="py-2 px-3">Status updated</td>
                     <td className="py-2 px-3">{new Date(e.time).toLocaleString()}</td>
                   </tr>
-                ))}
+                ))
+              )}
             </tbody>
           </table>
         </div>
