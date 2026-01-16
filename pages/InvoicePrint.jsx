@@ -220,7 +220,7 @@ const InvoicePrint = () => {
           <div>
             <div className="flex items-center space-x-3 mb-2">
               <img
-                src={companyProfile?.logoUrl || "/logo.png"}
+                src="/logo.png"
                 alt={companyProfile?.companyName || "Company Logo"}
                 className="w-32 h-16 object-contain"
               />

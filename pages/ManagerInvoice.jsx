@@ -419,10 +419,13 @@ const ManagerInvoice = () => {
     0,
   );
 
-  const whtItAmount =
-    (serviceChargesTotal * Number(whtIt || 0)) / 100;
-  const whtStAmount =
-    (serviceChargesTotal * Number(whtSt || 0)) / 100;
+  // Tax calculation: percentage rates applied on COD total
+  // whtIt / whtSt are treated as decimal rates (e.g. 0.05 = 5%)
+  const taxRateIt = Number(whtIt || 0) || 0;
+  const taxRateSt = Number(whtSt || 0) || 0;
+
+  const whtItAmount = Math.max(0, Math.round(codTotal * taxRateIt));
+  const whtStAmount = Math.max(0, Math.round(codTotal * taxRateSt));
 
   const netPayable =
     codTotal - serviceChargesTotal - whtItAmount - whtStAmount;
@@ -842,13 +845,11 @@ const ManagerInvoice = () => {
             ) : companyProfile ? (
               <div className="space-y-3">
                 <div className="flex items-center space-x-3">
-                  {companyProfile.logoUrl && (
-                    <img
-                      src={companyProfile.logoUrl}
-                      alt="Company Logo"
-                      className="w-12 h-12 object-contain"
-                    />
-                  )}
+                  <img
+                    src="/logo.png"
+                    alt="Company Logo"
+                    className="w-12 h-12 object-contain"
+                  />
                   <div>
                     <div className="font-semibold text-gray-900">
                       {companyProfile.companyName}

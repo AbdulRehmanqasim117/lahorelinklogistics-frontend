@@ -301,59 +301,18 @@ const CeoCompanyProfile = () => {
 
                 {/* Logo Preview */}
                 <div className="mb-4">
-                  {logoPreview ? (
-                    <div className="relative inline-block">
-                      <img
-                        src={logoPreview}
-                        alt="Company Logo"
-                        className="w-32 h-32 object-contain border-2 border-gray-200 rounded-lg bg-gray-50"
-                      />
-                      <button
-                        onClick={() => {
-                          setLogoPreview('');
-                          setProfileData(prev => ({ ...prev, logoUrl: '' }));
-                        }}
-                        className="absolute -top-2 -right-2 bg-red-500 text-white rounded-full p-1 hover:bg-red-600 transition-colors"
-                      >
-                        <X className="w-4 h-4" />
-                      </button>
-                    </div>
-                  ) : (
-                    <div className="w-32 h-32 bg-gray-100 border-2 border-dashed border-gray-300 rounded-lg flex items-center justify-center mx-auto">
-                      <Camera className="w-8 h-8 text-gray-400" />
-                    </div>
-                  )}
+                  <div className="relative inline-block">
+                    <img
+                      src="/logo.png"
+                      alt="Company Logo"
+                      className="w-32 h-32 object-contain border-2 border-gray-200 rounded-lg bg-gray-50"
+                    />
+                  </div>
                 </div>
 
                 {/* Upload Button */}
-                <div className="relative">
-                  <input
-                    type="file"
-                    id="logo-upload"
-                    className="hidden"
-                    accept="image/*"
-                    onChange={handleFileChange}
-                    disabled={uploading}
-                  />
-                  <label
-                    htmlFor="logo-upload"
-                    className="inline-flex items-center px-4 py-2 border border-gray-300 rounded-md shadow-sm text-sm font-medium text-gray-700 bg-white hover:bg-gray-50 cursor-pointer disabled:opacity-50 disabled:cursor-not-allowed"
-                  >
-                    {uploading ? (
-                      <>
-                        <Loader className="w-4 h-4 mr-2 animate-spin" />
-                        Uploading...
-                      </>
-                    ) : (
-                      <>
-                        <Upload className="w-4 h-4 mr-2" />
-                        Upload Logo
-                      </>
-                    )}
-                  </label>
-                </div>
                 <p className="text-xs text-gray-500 mt-2">
-                  Max 5MB. Supports JPEG, PNG, GIF, WebP
+                  Logo is managed by the system administrator.
                 </p>
               </div>
             </div>
