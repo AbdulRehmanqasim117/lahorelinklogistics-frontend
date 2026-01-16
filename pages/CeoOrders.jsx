@@ -8,6 +8,7 @@ const CeoOrders = () => {
   const { user } = useAuth();
   const token = user?.token || getToken();
   const navigate = useNavigate();
+  const role = user?.role;
 
   const baseOrderDetailPath =
     user?.role === "MANAGER" ? "/manager/orders" : "/ceo/orders";
@@ -16,6 +17,23 @@ const CeoOrders = () => {
   const [riders, setRiders] = useState([]);
   const [shippers, setShippers] = useState([]);
   const [selectedOrder, setSelectedOrder] = useState(null);
+  const [editingOrder, setEditingOrder] = useState(null);
+  const [editForm, setEditForm] = useState({
+    paymentType: "COD",
+    codAmount: "",
+    serviceCharges: "",
+    fragile: false,
+    pieces: "1",
+    weightKg: "",
+    consigneeName: "",
+    consigneePhone: "",
+    consigneeAddress: "",
+    destinationCity: "",
+    remarks: "",
+  });
+  const [editReason, setEditReason] = useState("");
+  const [editError, setEditError] = useState("");
+  const [editSaving, setEditSaving] = useState(false);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState("");
   const [searchId, setSearchId] = useState("");
@@ -264,6 +282,130 @@ const CeoOrders = () => {
     });
   }, [shippers]);
 
+  const openEditModal = (order) => {
+    if (!order) return;
+    setEditError("");
+    setEditReason("");
+    setEditForm({
+      paymentType: order.paymentType || "COD",
+      codAmount: String(order.codAmount ?? 0),
+      serviceCharges: String(order.serviceCharges ?? 0),
+      fragile: Boolean(order.fragile),
+      pieces: String(order.pieces ?? 1),
+      weightKg:
+        typeof order.weightKg === "number" && !Number.isNaN(order.weightKg)
+          ? String(order.weightKg)
+          : "",
+      consigneeName: order.consigneeName || "",
+      consigneePhone: order.consigneePhone || "",
+      consigneeAddress: order.consigneeAddress || "",
+      destinationCity: order.destinationCity || "",
+      remarks: order.remarks || "",
+    });
+    setEditingOrder(order);
+  };
+
+  const closeEditModal = () => {
+    setEditingOrder(null);
+    setEditSaving(false);
+    setEditError("");
+    setEditReason("");
+  };
+
+  const handleEditFieldChange = (field, value) => {
+    setEditForm((prev) => ({
+      ...prev,
+      [field]: value,
+    }));
+  };
+
+  const saveEdit = async () => {
+    if (!editingOrder || !token) return;
+    setEditError("");
+
+    const reason = editReason.trim();
+    if (!reason) {
+      setEditError("Reason for change is required.");
+      return;
+    }
+
+    const payload = {
+      paymentType: editForm.paymentType,
+      codAmount:
+        editForm.paymentType === "ADVANCE"
+          ? 0
+          : Number(editForm.codAmount || 0),
+      serviceCharges: Number(editForm.serviceCharges || 0),
+      fragile: Boolean(editForm.fragile),
+      pieces: editForm.pieces ? Number(editForm.pieces) : undefined,
+      weightKg: editForm.weightKg ? Number(editForm.weightKg) : undefined,
+      consigneeName: editForm.consigneeName,
+      consigneePhone: editForm.consigneePhone,
+      consigneeAddress: editForm.consigneeAddress,
+      destinationCity: editForm.destinationCity,
+      remarks: editForm.remarks,
+      reason,
+    };
+
+    if (Number.isNaN(payload.codAmount) || payload.codAmount < 0) {
+      setEditError("COD amount must be a non-negative number.");
+      return;
+    }
+    if (Number.isNaN(payload.serviceCharges) || payload.serviceCharges < 0) {
+      setEditError("Service charges must be a non-negative number.");
+      return;
+    }
+    if (
+      typeof payload.pieces !== "undefined" &&
+      (!Number.isInteger(payload.pieces) || payload.pieces <= 0)
+    ) {
+      setEditError("Pieces must be a positive integer.");
+      return;
+    }
+    if (
+      typeof payload.weightKg !== "undefined" &&
+      (Number.isNaN(payload.weightKg) || payload.weightKg <= 0)
+    ) {
+      setEditError("Weight must be a positive number.");
+      return;
+    }
+
+    const phoneDigits = String(payload.consigneePhone || "").replace(
+      /[^0-9]/g,
+      "",
+    );
+    if (phoneDigits.length < 7 || phoneDigits.length > 15) {
+      setEditError("Invalid consignee phone number.");
+      return;
+    }
+
+    setEditSaving(true);
+    try {
+      const res = await fetch(`/api/orders/${editingOrder._id}`, {
+        method: "PATCH",
+        headers: {
+          "Content-Type": "application/json",
+          Authorization: `Bearer ${token}`,
+        },
+        body: JSON.stringify(payload),
+      });
+      const data = await res.json();
+      if (!res.ok) {
+        throw new Error(data.message || "Failed to update order");
+      }
+
+      setOrders((prev) =>
+        Array.isArray(prev)
+          ? prev.map((o) => (o._id === data._id ? data : o))
+          : prev,
+      );
+      closeEditModal();
+    } catch (e) {
+      setEditSaving(false);
+      setEditError(e.message || "Failed to update order");
+    }
+  };
+
   const statusLabel = (order) => {
     if (!order) return "";
 
@@ -478,17 +620,30 @@ const CeoOrders = () => {
                         {o.assignedRider?.name || "Unassigned"}
                       </td>
                       <td className="py-2 px-3">
-                        {!["DELIVERED", "RETURNED", "FAILED"].includes(o.status) && (
-                          <button
-                            className="px-2 py-1 text-xs border border-gray-200 rounded hover:bg-gray-50"
-                            onClick={(e) => {
-                              e.stopPropagation();
-                              setSelectedOrder(o);
-                            }}
-                          >
-                            {o.assignedRider ? "Change Assignment" : "Assign"}
-                          </button>
-                        )}
+                        <div className="flex items-center gap-2">
+                          {role === "CEO" && (
+                            <button
+                              className="px-2 py-1 text-xs border border-gray-200 rounded hover:bg-gray-50"
+                              onClick={(e) => {
+                                e.stopPropagation();
+                                openEditModal(o);
+                              }}
+                            >
+                              Edit
+                            </button>
+                          )}
+                          {!["DELIVERED", "RETURNED", "FAILED"].includes(o.status) && (
+                            <button
+                              className="px-2 py-1 text-xs border border-gray-200 rounded hover:bg-gray-50"
+                              onClick={(e) => {
+                                e.stopPropagation();
+                                setSelectedOrder(o);
+                              }}
+                            >
+                              {o.assignedRider ? "Change Assignment" : "Assign"}
+                            </button>
+                          )}
+                        </div>
                       </td>
                     </tr>
                   ))}
@@ -541,6 +696,198 @@ const CeoOrders = () => {
                   </div>
                 </button>
               ))}
+            </div>
+          </div>
+        </div>
+      )}
+      {editingOrder && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/50">
+          <div className="bg-white rounded-xl shadow-2xl w-full max-w-xl overflow-hidden">
+            <div className="p-6 border-b border-gray-100 flex justify-between items-center">
+              <div>
+                <h3 className="text-lg font-bold text-secondary">Edit Order</h3>
+                <p className="text-xs text-gray-500 mt-1">
+                  Booking ID: {editingOrder.bookingId}  b7 Tracking ID: {editingOrder.trackingId || "-"}
+                </p>
+              </div>
+              <button
+                onClick={closeEditModal}
+                className="text-gray-400 hover:text-gray-600"
+              >
+                <XCircle className="w-5 h-5" />
+              </button>
+            </div>
+            <div className="p-6 space-y-4 max-h-[32rem] overflow-y-auto text-xs">
+              {editError && (
+                <div className="mb-2 p-2 rounded bg-red-50 border border-red-200 text-red-700 text-xs">
+                  {editError}
+                </div>
+              )}
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
+                <div>
+                  <label className="block text-gray-500 mb-1">Payment Type</label>
+                  <select
+                    value={editForm.paymentType}
+                    onChange={(e) =>
+                      handleEditFieldChange("paymentType", e.target.value)
+                    }
+                    className="w-full px-3 py-2 border border-gray-200 rounded-lg text-xs"
+                  >
+                    <option value="COD">COD</option>
+                    <option value="ADVANCE">ADVANCE</option>
+                  </select>
+                </div>
+                <div>
+                  <label className="block text-gray-500 mb-1">COD Amount</label>
+                  <input
+                    type="number"
+                    min="0"
+                    value={editForm.paymentType === "ADVANCE" ? "0" : editForm.codAmount}
+                    onChange={(e) =>
+                      handleEditFieldChange("codAmount", e.target.value)
+                    }
+                    disabled={editForm.paymentType === "ADVANCE"}
+                    className="w-full px-3 py-2 border border-gray-200 rounded-lg text-xs"
+                  />
+                </div>
+                <div>
+                  <label className="block text-gray-500 mb-1">Service Charges</label>
+                  <input
+                    type="number"
+                    min="0"
+                    value={editForm.serviceCharges}
+                    onChange={(e) =>
+                      handleEditFieldChange("serviceCharges", e.target.value)
+                    }
+                    className="w-full px-3 py-2 border border-gray-200 rounded-lg text-xs"
+                  />
+                </div>
+                <div className="flex items-center gap-2 mt-5">
+                  <input
+                    id="edit-fragile"
+                    type="checkbox"
+                    checked={!!editForm.fragile}
+                    onChange={(e) =>
+                      handleEditFieldChange("fragile", e.target.checked)
+                    }
+                    className="w-4 h-4 border-gray-300 rounded"
+                  />
+                  <label
+                    htmlFor="edit-fragile"
+                    className="text-gray-600 select-none"
+                  >
+                    Fragile
+                  </label>
+                </div>
+                <div>
+                  <label className="block text-gray-500 mb-1">Pieces</label>
+                  <input
+                    type="number"
+                    min="1"
+                    value={editForm.pieces}
+                    onChange={(e) =>
+                      handleEditFieldChange("pieces", e.target.value)
+                    }
+                    className="w-full px-3 py-2 border border-gray-200 rounded-lg text-xs"
+                  />
+                </div>
+                <div>
+                  <label className="block text-gray-500 mb-1">Weight (kg)</label>
+                  <input
+                    type="number"
+                    min="0"
+                    step="0.01"
+                    value={editForm.weightKg}
+                    onChange={(e) =>
+                      handleEditFieldChange("weightKg", e.target.value)
+                    }
+                    className="w-full px-3 py-2 border border-gray-200 rounded-lg text-xs"
+                  />
+                </div>
+                <div>
+                  <label className="block text-gray-500 mb-1">Consignee Name</label>
+                  <input
+                    type="text"
+                    value={editForm.consigneeName}
+                    onChange={(e) =>
+                      handleEditFieldChange("consigneeName", e.target.value)
+                    }
+                    className="w-full px-3 py-2 border border-gray-200 rounded-lg text-xs"
+                  />
+                </div>
+                <div>
+                  <label className="block text-gray-500 mb-1">Consignee Phone</label>
+                  <input
+                    type="text"
+                    value={editForm.consigneePhone}
+                    onChange={(e) =>
+                      handleEditFieldChange("consigneePhone", e.target.value)
+                    }
+                    className="w-full px-3 py-2 border border-gray-200 rounded-lg text-xs"
+                  />
+                </div>
+                <div className="md:col-span-2">
+                  <label className="block text-gray-500 mb-1">Consignee Address</label>
+                  <textarea
+                    rows={2}
+                    value={editForm.consigneeAddress}
+                    onChange={(e) =>
+                      handleEditFieldChange("consigneeAddress", e.target.value)
+                    }
+                    className="w-full px-3 py-2 border border-gray-200 rounded-lg text-xs"
+                  />
+                </div>
+                <div>
+                  <label className="block text-gray-500 mb-1">City / Destination</label>
+                  <input
+                    type="text"
+                    value={editForm.destinationCity}
+                    onChange={(e) =>
+                      handleEditFieldChange("destinationCity", e.target.value)
+                    }
+                    className="w-full px-3 py-2 border border-gray-200 rounded-lg text-xs"
+                  />
+                </div>
+                <div className="md:col-span-2">
+                  <label className="block text-gray-500 mb-1">Remarks (optional)</label>
+                  <textarea
+                    rows={2}
+                    value={editForm.remarks}
+                    onChange={(e) =>
+                      handleEditFieldChange("remarks", e.target.value)
+                    }
+                    className="w-full px-3 py-2 border border-gray-200 rounded-lg text-xs"
+                  />
+                </div>
+              </div>
+              <div>
+                <label className="block text-gray-500 mb-1">Reason for change</label>
+                <textarea
+                  rows={3}
+                  value={editReason}
+                  onChange={(e) => setEditReason(e.target.value)}
+                  className="w-full px-3 py-2 border border-gray-200 rounded-lg text-xs"
+                  placeholder="Describe why you are editing this order"
+                />
+              </div>
+            </div>
+            <div className="px-6 py-4 border-t border-gray-100 flex justify-end gap-2 bg-gray-50">
+              <button
+                type="button"
+                onClick={closeEditModal}
+                className="px-3 py-1.5 text-xs bg-white hover:bg-gray-100 rounded border border-gray-200 text-gray-600"
+                disabled={editSaving}
+              >
+                Cancel
+              </button>
+              <button
+                type="button"
+                onClick={saveEdit}
+                className="px-3 py-1.5 text-xs bg-primary hover:bg-primary-hover text-white rounded border border-primary disabled:opacity-60"
+                disabled={editSaving}
+              >
+                {editSaving ? "Saving..." : "Save Changes"}
+              </button>
             </div>
           </div>
         </div>
