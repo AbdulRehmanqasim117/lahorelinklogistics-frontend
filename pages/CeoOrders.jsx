@@ -264,16 +264,26 @@ const CeoOrders = () => {
     });
   }, [shippers]);
 
-  const statusLabel = (s) =>
-    ({
-      CREATED: "Pending",
-      ASSIGNED: "In LLL Warehouse",
-      AT_LLL_WAREHOUSE: "In LLL Warehouse",
-      OUT_FOR_DELIVERY: "Out for delivery",
-      RETURNED: "Returned",
-      DELIVERED: "Delivered",
-      FAILED: "Failed",
-    }[s] || s);
+  const statusLabel = (order) => {
+    if (!order) return "";
+
+    if (!order.assignedRider && ["ASSIGNED", "OUT_FOR_DELIVERY"].includes(order.status)) {
+      return "Unassigned";
+    }
+
+    const s = order.status;
+    return (
+      {
+        CREATED: "Pending",
+        ASSIGNED: "In LLL Warehouse",
+        AT_LLL_WAREHOUSE: "In LLL Warehouse",
+        OUT_FOR_DELIVERY: "Out for delivery",
+        RETURNED: "Returned",
+        DELIVERED: "Delivered",
+        FAILED: "Failed",
+      }[s] || s
+    );
+  };
 
   const bookingBadge = (order) => {
     const isBooked = order.bookingState === "BOOKED";
@@ -459,7 +469,7 @@ const CeoOrders = () => {
                           : "-"}
                       </td>
                       <td className="py-2 px-3 text-xs">
-                        {statusLabel(o.status)}
+                        {statusLabel(o)}
                       </td>
                       <td className="py-2 px-3 text-xs">
                         {o.paymentType || "-"}
@@ -468,7 +478,7 @@ const CeoOrders = () => {
                         {o.assignedRider?.name || "Unassigned"}
                       </td>
                       <td className="py-2 px-3">
-                        {(o.status === "CREATED" || o.assignedRider) && (
+                        {!["DELIVERED", "RETURNED", "FAILED"].includes(o.status) && (
                           <button
                             className="px-2 py-1 text-xs border border-gray-200 rounded hover:bg-gray-50"
                             onClick={(e) => {

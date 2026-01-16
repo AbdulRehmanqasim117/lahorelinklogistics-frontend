@@ -1,6 +1,6 @@
 import React, { useEffect, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { Truck, Mail, Phone, User, Search, Copy, CheckCircle, XCircle, RefreshCw, Key } from 'lucide-react';
+import { Truck, Mail, Phone, User, Search, Copy, CheckCircle, XCircle, RefreshCw, Key, Download } from 'lucide-react';
 import Button from '../components/ui/Button';
 import Input from '../components/ui/Input';
 
@@ -16,6 +16,7 @@ const CeoRiders = () => {
   const [error, setError] = useState('');
   const [searchTerm, setSearchTerm] = useState('');
   const [statusFilter, setStatusFilter] = useState('ALL');
+  const [reportDate, setReportDate] = useState(new Date().toISOString().split('T')[0]);
   const token = typeof window !== 'undefined' ? localStorage.getItem('token') : null;
 
   // Reset password modal state
@@ -53,6 +54,35 @@ const CeoRiders = () => {
       setError(e.message);
     } finally {
       setLoading(false);
+    }
+  };
+
+  const downloadDailyReport = async (riderId, riderName) => {
+    if (!token || !riderId) return;
+    try {
+      const res = await fetch(`/api/riders/${riderId}/daily-report?date=${reportDate}`, {
+        headers: { Authorization: token ? `Bearer ${token}` : '' }
+      });
+
+      if (!res.ok) {
+        let data = null;
+        try {
+          data = await res.json();
+        } catch (_) {}
+        throw new Error((data && data.message) || 'Failed to download report');
+      }
+
+      const blob = await res.blob();
+      const url = window.URL.createObjectURL(blob);
+      const a = document.createElement('a');
+      a.href = url;
+      a.download = `rider-${riderName || riderId}-${reportDate}.xlsx`;
+      document.body.appendChild(a);
+      a.click();
+      window.URL.revokeObjectURL(url);
+      document.body.removeChild(a);
+    } catch (e) {
+      setError(e.message || 'Failed to download report');
     }
   };
 
@@ -193,7 +223,7 @@ const CeoRiders = () => {
 
       {/* Filters */}
       <div className="bg-white p-6 rounded-xl border border-gray-100 shadow-sm">
-        <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+        <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
           <div className="relative">
             <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 w-4 h-4 text-gray-400" />
             <input
@@ -213,6 +243,15 @@ const CeoRiders = () => {
             <option value="ACTIVE">Active</option>
             <option value="INACTIVE">Inactive</option>
           </select>
+          <div className="flex flex-col">
+            <label className="text-xs text-gray-500 mb-1">Report Date</label>
+            <input
+              type="date"
+              value={reportDate}
+              onChange={(e) => setReportDate(e.target.value)}
+              className="px-4 py-2 border border-gray-200 rounded-lg focus:ring-2 focus:ring-primary focus:border-primary"
+            />
+          </div>
         </div>
       </div>
 
@@ -300,6 +339,13 @@ const CeoRiders = () => {
                           onClick={() => navigate(`/ceo/riders/${r._id}/settlements`, { state: { rider: r } })}
                         >
                           Settlements
+                        </button>
+                        <button
+                          className="px-2 py-1 text-xs border border-blue-200 text-blue-600 rounded hover:bg-blue-50 flex items-center gap-1"
+                          onClick={() => downloadDailyReport(r._id, r.name)}
+                        >
+                          <Download className="w-3 h-3" />
+                          Report
                         </button>
                       </div>
                     </td>

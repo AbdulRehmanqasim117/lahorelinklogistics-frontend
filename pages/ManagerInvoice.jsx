@@ -419,9 +419,13 @@ const ManagerInvoice = () => {
     0,
   );
 
-  const grossTotal = codTotal + serviceChargesTotal;
+  const whtItAmount =
+    (serviceChargesTotal * Number(whtIt || 0)) / 100;
+  const whtStAmount =
+    (serviceChargesTotal * Number(whtSt || 0)) / 100;
+
   const netPayable =
-    grossTotal - Number(whtIt || 0) - Number(whtSt || 0);
+    codTotal - serviceChargesTotal - whtItAmount - whtStAmount;
 
   const formatCurrency = (amount) => {
     return `PKR ${Number(amount || 0).toLocaleString()}`;
@@ -452,8 +456,8 @@ const ManagerInvoice = () => {
         parcelFrom,
         parcelTo,
         selectedOrderIds: realSelectedIds,
-        whtIt: Number(whtIt || 0),
-        whtSt: Number(whtSt || 0),
+        whtIt: whtItAmount,
+        whtSt: whtStAmount,
       };
 
       const res = await fetch("/api/invoice", {

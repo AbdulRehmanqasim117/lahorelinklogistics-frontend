@@ -171,7 +171,8 @@ const RiderDashboard = () => {
   );
 
   const outForDeliveryCount = useMemo(
-    () => orders.filter((o) => o.status === 'OUT_FOR_DELIVERY').length,
+    () =>
+      orders.filter((o) => ['ASSIGNED', 'OUT_FOR_DELIVERY'].includes(o.status)).length,
     [orders],
   );
 
@@ -233,7 +234,9 @@ const RiderDashboard = () => {
   );
 
   const mobileOutForDeliveryCount = useMemo(
-    () => mobileFilteredOrders.filter((o) => o.status === 'OUT_FOR_DELIVERY').length,
+    () =>
+      mobileFilteredOrders.filter((o) => ['ASSIGNED', 'OUT_FOR_DELIVERY'].includes(o.status))
+        .length,
     [mobileFilteredOrders],
   );
 

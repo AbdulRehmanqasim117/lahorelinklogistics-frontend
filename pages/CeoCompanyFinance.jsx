@@ -348,13 +348,17 @@ const CeoCompanyFinance = () => {
         throw new Error(json.message || "Failed to close current month");
       }
 
-      // Refresh summary/top cards and ledger after closing
-      await fetchData();
+      // Reset filters and refresh summary/top cards and ledger after closing.
+      // After closing, the active finance period advances; by keeping
+      // range="all" with no explicit dates we now show only the new
+      // period, which should start at zero until new orders arrive.
       setActiveRange("all");
       setFrom("");
       setTo("");
       setShipperFilter("all");
       setRiderFilter("all");
+
+      await fetchData({ range: "all", from: "", to: "" });
       await fetchLedger({ range: "all", from: "", to: "" });
     } catch (e) {
       setError(e.message || "Failed to close current month");
@@ -757,7 +761,7 @@ const CeoCompanyFinance = () => {
                   <span>Rider Payout</span>
                   <span className="font-semibold text-secondary">
                     {formatCurrency(
-                      ledgerTotals?.totalRiderPayoutPaid || 0,
+                      (ledgerTotals?.totalRiderPayout) || 0,
                     )}
                   </span>
                 </div>

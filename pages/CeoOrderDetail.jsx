@@ -51,6 +51,32 @@ const CeoOrderDetail = () => {
     ? Number((tx.totalCodCollected || 0) - (tx.companyCommission || 0))
     : null;
 
+  const getDisplayStatus = (o) => {
+    if (!o) return "";
+
+    if (!o.assignedRider && ["ASSIGNED", "OUT_FOR_DELIVERY"].includes(o.status)) {
+      return "Unassigned";
+    }
+
+    switch (o.status) {
+      case "OUT_FOR_DELIVERY":
+        return "Out for delivery";
+      case "DELIVERED":
+        return "Delivered";
+      case "RETURNED":
+        return "Returned";
+      case "FAILED":
+        return "Failed";
+      case "CREATED":
+        return "Created";
+      case "ASSIGNED":
+      case "AT_LLL_WAREHOUSE":
+        return "Assigned";
+      default:
+        return o.status;
+    }
+  };
+
   return (
     <div className="space-y-6">
       <div className="bg-white p-6 rounded-xl border border-gray-100 shadow-sm flex items-center justify-between">
@@ -78,7 +104,7 @@ const CeoOrderDetail = () => {
           <div className="text-xs opacity-80">COD Amount</div>
           <div className="text-3xl font-bold">PKR {codText}</div>
         </div>
-        <Badge status={order.status} />
+        <Badge status={getDisplayStatus(order)} />
       </div>
 
       {tx && (

@@ -312,7 +312,7 @@ const CeoRiderSettlements = () => {
         </div>
       )}
 
-      <div className="grid grid-cols-1 md:grid-cols-3 lg:grid-cols-5 gap-3">
+      <div className="grid grid-cols-1 md:grid-cols-3 lg:grid-cols-6 gap-3">
         <div className="bg-white border border-gray-100 rounded-lg p-4 shadow-sm">
           <div className="text-[11px] text-gray-500">Delivered (range)</div>
           <div className="mt-1 text-xl font-bold text-secondary">
@@ -329,6 +329,12 @@ const CeoRiderSettlements = () => {
           <div className="text-[11px] text-gray-500">Failed (range)</div>
           <div className="mt-1 text-xl font-bold text-secondary">
             {summary.failedCount || 0}
+          </div>
+        </div>
+        <div className="bg-white border border-gray-100 rounded-lg p-4 shadow-sm">
+          <div className="text-[11px] text-gray-500">COD (range)</div>
+          <div className="mt-1 text-sm font-bold text-secondary">
+            {formatCurrency(summary.codCollected || 0)}
           </div>
         </div>
         <div className="bg-white border border-gray-100 rounded-lg p-4 shadow-sm">

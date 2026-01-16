@@ -166,7 +166,7 @@ const InvoicePrint = () => {
   const whtItValue = invoice.whtIt || 0;
   const whtStValue = invoice.whtSt || 0;
   const computedNet =
-    codTotalValue + serviceChargesValue - whtItValue - whtStValue;
+    codTotalValue - serviceChargesValue - whtItValue - whtStValue;
   const netPayableValue =
     invoice.netPayable != null ? invoice.netPayable : computedNet;
 
