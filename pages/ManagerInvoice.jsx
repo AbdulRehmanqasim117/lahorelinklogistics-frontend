@@ -410,8 +410,26 @@ const ManagerInvoice = () => {
   const selectedOrdersData = orders.filter(
     (o) => selectedParcelIds.has(o._id) && !o._id.startsWith("TEST-"),
   );
+
+  const computeInvoiceCodAmountClient = (order) => {
+    const status = String(order.status || "").toUpperCase();
+    const isDelivered = status === "DELIVERED";
+    const isCod = order.paymentType === "COD";
+
+    if (isDelivered && isCod) {
+      const cod = Number(
+        order.amountCollected !== undefined && order.amountCollected !== null
+          ? order.amountCollected
+          : order.codAmount || 0,
+      );
+      return Number.isNaN(cod) ? 0 : cod;
+    }
+
+    return 0;
+  };
+
   const codTotal = selectedOrdersData.reduce(
-    (sum, order) => sum + (order.codAmount || 0),
+    (sum, order) => sum + computeInvoiceCodAmountClient(order),
     0,
   );
   const serviceChargesTotal = selectedOrdersData.reduce(

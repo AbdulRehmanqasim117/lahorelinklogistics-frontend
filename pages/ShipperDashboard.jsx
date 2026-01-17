@@ -127,11 +127,25 @@ const ShipperDashboard = () => {
           (sum, o) => sum + Number(o.codAmount || 0),
           0,
         );
+
         const totalServiceCharges = filteredOrders.reduce(
           (sum, o) => sum + Number(o.serviceCharges || 0),
           0,
         );
-        const netAmount = totalCod - totalServiceCharges;
+
+        const deliveredCod = filteredOrders.reduce((sum, o) => {
+          if (o.status === "DELIVERED" && o.paymentType === "COD") {
+            const cod = Number(
+              o.amountCollected !== undefined && o.amountCollected !== null
+                ? o.amountCollected
+                : o.codAmount || 0,
+            );
+            return sum + (Number.isNaN(cod) ? 0 : cod);
+          }
+          return sum;
+        }, 0);
+
+        const netAmount = deliveredCod - totalServiceCharges;
 
         setSummaryOrdersData({
           pendingCod,

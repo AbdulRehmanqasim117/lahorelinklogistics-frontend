@@ -1,6 +1,6 @@
 import React, { useEffect, useState } from "react";
 import { useParams, useNavigate } from "react-router-dom";
-import { ArrowLeft, MapPin, Phone, Package, Printer } from "lucide-react";
+import { ArrowLeft, MapPin, Phone, Package, Printer, Check, RotateCcw } from "lucide-react";
 import Badge from "../components/ui/Badge.jsx";
 
 const CeoOrderDetail = () => {
@@ -10,6 +10,8 @@ const CeoOrderDetail = () => {
   const [tx, setTx] = useState(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState("");
+  const [statusError, setStatusError] = useState("");
+  const [statusSaving, setStatusSaving] = useState(false);
   const token =
     typeof window !== "undefined" ? localStorage.getItem("token") : null;
 
@@ -40,6 +42,41 @@ const CeoOrderDetail = () => {
   useEffect(() => {
     fetchOrder();
   }, [id]);
+
+  const updateStatus = async (status) => {
+    const token =
+      typeof window !== "undefined" ? localStorage.getItem("token") : null;
+
+    if (!token) {
+      setStatusError("Unauthorized: missing token");
+      return;
+    }
+
+    try {
+      setStatusSaving(true);
+      setStatusError("");
+
+      const res = await fetch(`/api/orders/${id}/status`, {
+        method: "PATCH",
+        headers: {
+          "Content-Type": "application/json",
+          Authorization: `Bearer ${token}`,
+        },
+        body: JSON.stringify({ status }),
+      });
+
+      const data = await res.json();
+      if (!res.ok) {
+        throw new Error(data.message || "Failed to update status");
+      }
+
+      setOrder(data);
+    } catch (e) {
+      setStatusError(e.message || "Failed to update status");
+    } finally {
+      setStatusSaving(false);
+    }
+  };
 
   if (loading) return <div className="p-6">Loading...</div>;
   if (error) return <div className="p-6 text-red-600 text-sm">{error}</div>;
@@ -105,6 +142,50 @@ const CeoOrderDetail = () => {
           <div className="text-3xl font-bold">PKR {codText}</div>
         </div>
         <Badge status={getDisplayStatus(order)} />
+      </div>
+
+      <div className="bg-white p-4 rounded-xl border border-gray-100 shadow-sm">
+        <h3 className="text-sm font-semibold text-secondary mb-3">Update Delivery Status</h3>
+        {statusError && (
+          <div className="mb-2 text-xs text-red-600">{statusError}</div>
+        )}
+        <div className="flex flex-wrap gap-2">
+          <button
+            onClick={() => updateStatus("FIRST_ATTEMPT")}
+            disabled={statusSaving}
+            className="px-3 py-1.5 text-xs bg-blue-50 hover:bg-blue-100 text-blue-700 rounded disabled:opacity-50 disabled:cursor-not-allowed"
+          >
+            1st Attempt
+          </button>
+          <button
+            onClick={() => updateStatus("SECOND_ATTEMPT")}
+            disabled={statusSaving}
+            className="px-3 py-1.5 text-xs bg-blue-50 hover:bg-blue-100 text-blue-700 rounded disabled:opacity-50 disabled:cursor-not-allowed"
+          >
+            2nd Attempt
+          </button>
+          <button
+            onClick={() => updateStatus("THIRD_ATTEMPT")}
+            disabled={statusSaving}
+            className="px-3 py-1.5 text-xs bg-blue-50 hover:bg-blue-100 text-blue-700 rounded disabled:opacity-50 disabled:cursor-not-allowed"
+          >
+            3rd Attempt
+          </button>
+          <button
+            onClick={() => updateStatus("DELIVERED")}
+            disabled={statusSaving}
+            className="px-3 py-1.5 text-xs bg-green-600 hover:bg-green-700 text-white rounded disabled:opacity-50 disabled:cursor-not-allowed"
+          >
+            <Check className="w-4 h-4 inline mr-1" /> Delivered
+          </button>
+          <button
+            onClick={() => updateStatus("RETURNED")}
+            disabled={statusSaving}
+            className="px-3 py-1.5 text-xs bg-red-600 hover:bg-red-700 text-white rounded disabled:opacity-50 disabled:cursor-not-allowed"
+          >
+            <RotateCcw className="w-4 h-4 inline mr-1" /> Return
+          </button>
+        </div>
       </div>
 
       {tx && (
