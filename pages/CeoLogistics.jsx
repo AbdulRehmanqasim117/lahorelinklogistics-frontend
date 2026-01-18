@@ -74,6 +74,7 @@ const CeoLogistics = () => {
                 <th className="py-2 px-3">Assigned</th>
                 <th className="py-2 px-3">OFD</th>
                 <th className="py-2 px-3">Delivered</th>
+                <th className="py-2 px-3">Returned</th>
               </tr>
             </thead>
             <tbody className="divide-y divide-gray-100">
@@ -81,12 +82,14 @@ const CeoLogistics = () => {
                 const assigned = orders.filter(o => o.assignedRider && (o.assignedRider._id === r._id || o.assignedRider === r._id));
                 const ofd = assigned.filter(o => o.status === 'OUT_FOR_DELIVERY');
                 const delivered = assigned.filter(o => o.status === 'DELIVERED');
+                const returned = assigned.filter(o => o.status === 'RETURNED');
                 return (
                   <tr key={r._id}>
                     <td className="py-2 px-3">{r.name}</td>
                     <td className="py-2 px-3">{assigned.length}</td>
                     <td className="py-2 px-3">{ofd.length}</td>
                     <td className="py-2 px-3">{delivered.length}</td>
+                    <td className="py-2 px-3">{returned.length}</td>
                   </tr>
                 );
               })}

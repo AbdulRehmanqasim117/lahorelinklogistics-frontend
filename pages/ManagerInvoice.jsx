@@ -1070,21 +1070,6 @@ const ManagerInvoice = () => {
                     Try adjusting your customer selection and date range
                   </div>
                 </div>
-              ) : orders.filter(
-                  (o) => o.invoice === null || o.invoice === undefined,
-                ).length === 0 ? (
-                <div className="text-center py-8 text-gray-500">
-                  <Package className="w-12 h-12 mx-auto mb-4 text-gray-400" />
-                  <div className="text-lg font-medium mb-2">
-                    No selectable parcels found
-                  </div>
-                  <div className="text-sm">
-                    All parcels in this date range have already been paid.
-                    <br />
-                    Try selecting a different date range to find unpaid
-                    parcels.
-                  </div>
-                </div>
               ) : (
                 <>
                   {/* Desktop Table View */}
