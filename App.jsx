@@ -298,7 +298,7 @@ const AppContent = () => {
       <Route
         path="/ceo/riders/:id/settlements"
         element={
-          <ProtectedRoute allowedRoles={["CEO"]}>
+          <ProtectedRoute allowedRoles={["CEO", "MANAGER"]}>
             <CeoRiderSettlements />
           </ProtectedRoute>
         }
@@ -336,7 +336,7 @@ const AppContent = () => {
         path="/manager/riders"
         element={
           <ProtectedRoute allowedRoles={["MANAGER"]}>
-            <ManagerRiders />
+            <CeoRiders />
           </ProtectedRoute>
         }
       />
