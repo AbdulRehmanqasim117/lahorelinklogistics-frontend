@@ -621,7 +621,7 @@ const CeoOrders = () => {
                       </td>
                       <td className="py-2 px-3">
                         <div className="flex items-center gap-2">
-                          {role === "CEO" && (
+                          {(role === "CEO" || role === "MANAGER") && (
                             <button
                               className="px-2 py-1 text-xs border border-gray-200 rounded hover:bg-gray-50"
                               onClick={(e) => {
