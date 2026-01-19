@@ -269,8 +269,16 @@ const ManagerInvoice = () => {
       if (res.ok && Array.isArray(data)) {
         console.log("Orders loaded from API:", data);
 
+        // Frontend guard: only keep final billable orders in the invoice
+        // parcel list. Attempts / in-transit statuses are excluded here so
+        // they can never be invoiced.
+        const finalStatusData = data.filter((order) => {
+          const st = String(order.status || "").toUpperCase();
+          return st === "DELIVERED" || st === "RETURNED";
+        });
+
         // Validate order structure
-        const validatedOrders = data.map((order) => ({
+        const validatedOrders = finalStatusData.map((order) => ({
           ...order,
           _id: order._id || order.id,
           invoice: order.invoice || null,

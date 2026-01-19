@@ -109,7 +109,39 @@ const ShipperFinance = () => {
       });
       const json = await res.json();
       if (!res.ok) throw new Error(json.message || 'Failed to load ledger');
-      setLedger(json);
+
+      // Frontend safety guard: never show attempt / in-transit statuses in
+      // the shipper ledger. Only keep DELIVERED and RETURNED rows, and
+      // recompute totals from these filtered rows.
+      const rawRows = Array.isArray(json.rows) ? json.rows : [];
+      const safeRows = rawRows.filter((r) => {
+        const st = String(r.orderStatus || '').toUpperCase();
+        return st === 'DELIVERED' || st === 'RETURNED';
+      });
+
+      const recomputedTotals = safeRows.reduce(
+        (acc, r) => {
+          acc.totalCod += Number(r.codAmount || 0);
+          acc.totalServiceCharges += Number(r.serviceCharges || 0);
+          const receivable = Number(r.receivable ?? r.amount ?? 0);
+          acc.totalReceivable += receivable;
+          acc.totalAmount += receivable;
+          return acc;
+        },
+        { totalCod: 0, totalServiceCharges: 0, totalReceivable: 0, totalAmount: 0 },
+      );
+
+      setLedger({
+        ...json,
+        rows: safeRows,
+        total: safeRows.length,
+        totals: {
+          totalCod: Number(recomputedTotals.totalCod || 0),
+          totalServiceCharges: Number(recomputedTotals.totalServiceCharges || 0),
+          totalReceivable: Number(recomputedTotals.totalReceivable || 0),
+          totalAmount: Number(recomputedTotals.totalAmount || 0),
+        },
+      });
     } catch (e) {
       setError(e.message);
     } finally {
