@@ -618,6 +618,12 @@ const ShipperDashboard = () => {
     setSaving(true);
     setError("");
 
+    if (!form.productDescription || !String(form.productDescription).trim()) {
+      setError("Product description is required");
+      setSaving(false);
+      return;
+    }
+
     // Validate weight
     if (!form.weightKg || form.weightKg <= 0) {
       setError("Weight must be greater than 0");
@@ -1127,6 +1133,7 @@ const ShipperDashboard = () => {
                   onChange={(e) =>
                     setForm({ ...form, productDescription: e.target.value })
                   }
+                  required
                 />
               </div>
               <label className="flex items-center gap-3 cursor-pointer">
