@@ -263,7 +263,7 @@ const SignupShipper = () => {
 
           <div>
             <Input
-              label="Account Type"
+              label="Bank Name"
               name="accountType"
               value={formData.accountType}
               onChange={handleChange}

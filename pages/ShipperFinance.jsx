@@ -42,10 +42,9 @@ const ShipperFinance = () => {
 
   const [from, setFrom] = useState('');
   const [to, setTo] = useState('');
-  const [paidStatus, setPaidStatus] = useState('ALL');
+  const [paidStatus, setPaidStatus] = useState('UNPAID');
   const [search, setSearch] = useState('');
-  const [page, setPage] = useState(1);
-  const limit = 20;
+  // Ledger is loaded without pagination; we always fetch all filtered rows in one go.
 
   // Prefer using the ledger totals (which respect current filters) for the
   // Balance card so that it always matches the visible ledger/journal.
@@ -85,15 +84,25 @@ const ShipperFinance = () => {
     setError('');
     try {
       const params = new URLSearchParams();
-      if (opts.from ?? from) params.set('from', (opts.from ?? from));
-      if (opts.to ?? to) params.set('to', (opts.to ?? to));
-      const statusVal = (opts.paidStatus ?? paidStatus);
-      if (statusVal === 'PAID' || statusVal === 'UNPAID') params.set('status', statusVal);
-      const s = (opts.search ?? search);
+
+      const fromVal = opts.from ?? from;
+      if (fromVal) params.set('from', fromVal);
+
+      const toVal = opts.to ?? to;
+      if (toVal) params.set('to', toVal);
+
+      const statusRaw = opts.paidStatus ?? paidStatus;
+      const statusVal = statusRaw || 'UNPAID';
+      if (statusVal === 'ALL' || statusVal === 'PAID' || statusVal === 'UNPAID') {
+        params.set('status', statusVal);
+      }
+
+      const s = opts.search ?? search;
       if (s && String(s).trim()) params.set('search', String(s).trim());
-      const pageToUse = opts.page ?? page;
-      params.set('page', String(pageToUse));
-      params.set('limit', String(limit));
+
+      // Always request all filtered rows in a single response for consistent totals/balance
+      params.set('page', '1');
+      params.set('limit', 'all');
 
       const res = await fetch(`/api/shipper/finance/ledger?${params.toString()}`, {
         headers: { Authorization: token ? `Bearer ${token}` : '' },
@@ -113,12 +122,11 @@ const ShipperFinance = () => {
   }, [token]);
 
   useEffect(() => {
-    fetchLedger({ page });
-  }, [token, page]);
+    fetchLedger();
+  }, [token]);
 
   const applyFilters = async () => {
-    setPage(1);
-    await fetchLedger({ page: 1 });
+    await fetchLedger();
   };
 
   const downloadCsv = async () => {
@@ -126,7 +134,7 @@ const ShipperFinance = () => {
       const params = new URLSearchParams();
       if (from) params.set('from', from);
       if (to) params.set('to', to);
-      if (paidStatus === 'PAID' || paidStatus === 'UNPAID') params.set('status', paidStatus);
+      if (paidStatus === 'ALL' || paidStatus === 'PAID' || paidStatus === 'UNPAID') params.set('status', paidStatus || 'UNPAID');
       if (search && String(search).trim()) params.set('search', String(search).trim());
       params.set('format', 'csv');
       params.set('limit', 'all');
@@ -301,8 +309,7 @@ const ShipperFinance = () => {
                   setTo('');
                   setPaidStatus('ALL');
                   setSearch('');
-                  setPage(1);
-                  fetchLedger({ from: '', to: '', paidStatus: 'ALL', search: '', page: 1 });
+                  fetchLedger({ from: '', to: '', paidStatus: 'ALL', search: '' });
                 }}
                 className="w-full sm:w-auto text-xs"
               >
@@ -383,25 +390,7 @@ const ShipperFinance = () => {
           </table>
         </div>
 
-        <div className="p-4 border-t border-gray-100 flex items-center justify-between flex-wrap gap-2">
-          <div className="text-xs text-gray-500">Showing page {ledger?.page || 1} of {ledger?.totalPages || 1} (Total {ledger?.total || 0})</div>
-          <div className="flex items-center gap-2">
-            <button
-              onClick={() => setPage((p) => Math.max(1, p - 1))}
-              disabled={(ledger?.page || 1) <= 1}
-              className="px-3 py-1.5 text-xs bg-gray-50 hover:bg-gray-100 rounded border border-gray-200 text-gray-600 disabled:opacity-50 disabled:cursor-not-allowed"
-            >
-              Prev
-            </button>
-            <button
-              onClick={() => setPage((p) => Math.min((ledger?.totalPages || 1), p + 1))}
-              disabled={(ledger?.page || 1) >= (ledger?.totalPages || 1)}
-              className="px-3 py-1.5 text-xs bg-gray-50 hover:bg-gray-100 rounded border border-gray-200 text-gray-600 disabled:opacity-50 disabled:cursor-not-allowed"
-            >
-              Next
-            </button>
-          </div>
-        </div>
+        {/* Shipper ledger shows all filtered rows at once; no pagination footer needed */}
       </div>
     </div>
   );

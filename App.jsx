@@ -22,9 +22,9 @@ import CeoCompanyFinance from "./pages/CeoCompanyFinance.jsx";
 import CeoAssignByScan from "./pages/CeoAssignByScan.jsx";
 import CeoRiders from "./pages/CeoRiders.jsx";
 import CeoRiderSettlements from "./pages/CeoRiderSettlements.jsx";
+import CeoOrderDetail from "./pages/CeoOrderDetail.jsx";
 import WarehouseScan from "./pages/WarehouseScan.jsx";
 import ManagerDashboard from "./pages/ManagerDashboard.jsx";
-import ManagerAllOrders from "./pages/ManagerAllOrders.jsx";
 import ManagerRiders from "./pages/ManagerRiders.jsx";
 import ManagerCommission from "./pages/ManagerCommission.jsx";
 import ManagerInvoice from "./pages/ManagerInvoice.jsx";
@@ -32,7 +32,6 @@ import ManagerLogistics from "./pages/ManagerLogistics.jsx";
 import InvoicePrint from "./pages/InvoicePrint.jsx";
 import ShipperDashboard from "./pages/ShipperDashboard.jsx";
 import ShipperOrderDetail from "./pages/ShipperOrderDetail.jsx";
-import CeoOrderDetail from "./pages/CeoOrderDetail.jsx";
 import ShipperIntegrations from "./pages/ShipperIntegrations.jsx";
 import ShipperIntegratedOrders from "./pages/ShipperIntegratedOrders.jsx";
 import ShipperFinance from "./pages/ShipperFinance.jsx";
@@ -319,7 +318,16 @@ const AppContent = () => {
         path="/manager/orders"
         element={
           <ProtectedRoute allowedRoles={["MANAGER"]}>
-            <ManagerAllOrders />
+            <CeoOrders />
+          </ProtectedRoute>
+        }
+      />
+
+      <Route
+        path="/manager/orders/:id"
+        element={
+          <ProtectedRoute allowedRoles={["MANAGER"]}>
+            <CeoOrderDetail />
           </ProtectedRoute>
         }
       />

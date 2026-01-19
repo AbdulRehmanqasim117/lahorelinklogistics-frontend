@@ -545,36 +545,6 @@ const CeoRiderSettlements = () => {
             </tbody>
           </table>
         </div>
-
-        <div className="p-3 border-t border-gray-100 flex items-center justify-between text-[11px] text-gray-500">
-          <div>
-            Showing page {data.page || 1} of {data.totalPages || 1} (Total {data.total || 0})
-          </div>
-          <div className="flex items-center gap-2">
-            <button
-              onClick={() => {
-                const newPage = Math.max(1, (data.page || 1) - 1);
-                setPage(newPage);
-                fetchSettlements({ page: newPage });
-              }}
-              disabled={(data.page || 1) <= 1 || loading}
-              className="px-3 py-1.5 rounded border border-gray-200 bg-gray-50 hover:bg-gray-100 disabled:opacity-50 disabled:cursor-not-allowed"
-            >
-              Prev
-            </button>
-            <button
-              onClick={() => {
-                const newPage = Math.min(data.totalPages || 1, (data.page || 1) + 1);
-                setPage(newPage);
-                fetchSettlements({ page: newPage });
-              }}
-              disabled={(data.page || 1) >= (data.totalPages || 1) || loading}
-              className="px-3 py-1.5 rounded border border-gray-200 bg-gray-50 hover:bg-gray-100 disabled:opacity-50 disabled:cursor-not-allowed"
-            >
-              Next
-            </button>
-          </div>
-        </div>
       </div>
     </div>
   );
