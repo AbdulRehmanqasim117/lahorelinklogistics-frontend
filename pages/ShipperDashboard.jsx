@@ -182,17 +182,17 @@ const ShipperDashboard = () => {
 
   const fetchFinance = async () => {
     try {
-      const res = await fetch("/api/finance/summary/shipper/me", {
+      const res = await fetch("/api/shipper/finance/summary", {
         headers: { Authorization: token ? `Bearer ${token}` : "" },
       });
       console.log(
-        "DEBUG fetchFinance response status:",
+        "DEBUG fetchFinance (shipper finance summary) status:",
         res.status,
         "ok:",
         res.ok,
       );
       const data = await res.json();
-      console.log("DEBUG fetchFinance response data:", data);
+      console.log("DEBUG fetchFinance (shipper finance summary) data:", data);
       if (res.ok) {
         setFinance(data);
       } else {
@@ -491,6 +491,32 @@ const ShipperDashboard = () => {
     .filter((o) => !["DELIVERED", "RETURNED", "FAILED"].includes(o.status))
     .reduce((sum, o) => sum + Number(o.codAmount || 0), 0);
   const returnedCount = orders.filter((o) => o.status === "RETURNED").length;
+
+  // Dashboard Net Amount should reflect the same outstanding balance
+  // as the Shipper Finance ledger (i.e. only unpaid final orders),
+  // not net across all historical orders. We reuse the balance from the
+  // shipper finance summary when available, falling back to the
+  // time-filtered netAmount only if finance data has not loaded yet.
+  const dashboardNetAmount =
+    finance && typeof finance.balance === "number"
+      ? finance.balance
+      : summaryOrdersData.netAmount;
+
+  // Dashboard Total COD and Service Charges should also align with the
+  // outstanding (uninvoiced) balance. Prefer the finance summary totals
+  // when present, and fall back to the time-filtered aggregates only if
+  // finance data is not yet available.
+  const dashboardTotalCod =
+    finance && finance.totals && typeof finance.totals.totalCod === "number"
+      ? finance.totals.totalCod
+      : summaryOrdersData.totalCod;
+
+  const dashboardServiceCharges =
+    finance &&
+    finance.totals &&
+    typeof finance.totals.totalServiceCharges === "number"
+      ? finance.totals.totalServiceCharges
+      : summaryOrdersData.totalServiceCharges;
 
   const statusLabel = (s) =>
     ({
@@ -1001,17 +1027,17 @@ const ShipperDashboard = () => {
           <StatusCard
             icon={DollarSign}
             title="Total COD"
-            count={`PKR ${summaryOrdersData.totalCod.toLocaleString()}`}
+            count={`PKR ${dashboardTotalCod.toLocaleString()}`}
           />
           <StatusCard
             icon={DollarSign}
             title="Service Charges"
-            count={`PKR ${summaryOrdersData.totalServiceCharges.toLocaleString()}`}
+            count={`PKR ${dashboardServiceCharges.toLocaleString()}`}
           />
           <StatusCard
             icon={DollarSign}
             title="Net Amount"
-            count={`PKR ${summaryOrdersData.netAmount.toLocaleString()}`}
+            count={`PKR ${dashboardNetAmount.toLocaleString()}`}
           />
         </div>
       )}
