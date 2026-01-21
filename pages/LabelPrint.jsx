@@ -102,9 +102,13 @@ const LabelPrint = () => {
     const displayOrderNumber =
       labelData.displayOrderNumber ||
       (isIntegrated ? shopifyOrderNumber || bookingId : bookingId);
-    const shipperName = labelData.shipper?.name || "N/A";
+    const shipperName =
+      labelData.shipper?.companyName || labelData.shipper?.name || "N/A";
     const shipperAddress =
-      labelData.shipper?.address || labelData.shipper?.companyName || "N/A";
+      labelData.shipper?.address ||
+      labelData.shipper?.pickupAddress ||
+      labelData.shipper?.companyName ||
+      "N/A";
     const shipperPhone = labelData.shipper?.phone || "N/A";
     const trackingId = labelData.trackingId || "N/A";
     const service = paymentType;

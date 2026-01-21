@@ -11,6 +11,7 @@ const SignupShipper = () => {
     password: '',
     confirmPassword: '',
     companyName: '',
+    businessAddress: '',
     cnicNumber: '',
     contactNumber: '',
     emergencyContact: '',
@@ -67,6 +68,7 @@ const SignupShipper = () => {
     }
     
     if (!formData.companyName.trim()) errors.companyName = 'Business name is required';
+    if (!formData.businessAddress.trim()) errors.businessAddress = 'Address is required';
     if (!formData.contactNumber.trim()) errors.contactNumber = 'Contact number is required';
     if (!formData.accountType.trim()) errors.accountType = 'Account type is required';
     if (!formData.accountHolderName.trim()) errors.accountHolderName = 'Account holder name is required';
@@ -212,6 +214,18 @@ const SignupShipper = () => {
               required 
             />
             {formErrors.companyName && <p className="mt-1 text-sm text-red-500">{formErrors.companyName}</p>}
+          </div>
+
+          <div>
+            <Input
+              label="Business Address"
+              name="businessAddress"
+              value={formData.businessAddress}
+              onChange={handleChange}
+              error={formErrors.businessAddress}
+              required
+            />
+            {formErrors.businessAddress && <p className="mt-1 text-sm text-red-500">{formErrors.businessAddress}</p>}
           </div>
           
           <div>
