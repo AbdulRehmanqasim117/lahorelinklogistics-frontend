@@ -102,8 +102,8 @@ const LabelPrint = () => {
     const displayOrderNumber =
       labelData.displayOrderNumber ||
       (isIntegrated ? shopifyOrderNumber || bookingId : bookingId);
-    const shipperName =
-      labelData.shipper?.companyName || labelData.shipper?.name || "N/A";
+    // Shipper line should always show brand/company name only
+    const shipperName = labelData.shipper?.companyName || "N/A";
     const shipperAddress =
       labelData.shipper?.address ||
       labelData.shipper?.pickupAddress ||
