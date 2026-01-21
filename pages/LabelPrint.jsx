@@ -102,7 +102,7 @@ const LabelPrint = () => {
     const displayOrderNumber =
       labelData.displayOrderNumber ||
       (isIntegrated ? shopifyOrderNumber || bookingId : bookingId);
-    // Shipper line should always show brand/company name only
+    // Shipper line should always show brand/company name onlyasddsadas
     const shipperName = labelData.shipper?.companyName || "N/A";
     const shipperAddress =
       labelData.shipper?.address ||
