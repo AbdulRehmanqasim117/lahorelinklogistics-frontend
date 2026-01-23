@@ -91,8 +91,17 @@ const CeoOrderDetail = () => {
   const getDisplayStatus = (o) => {
     if (!o) return "";
 
-    if (!o.assignedRider && ["ASSIGNED", "OUT_FOR_DELIVERY"].includes(o.status)) {
+    const hasRider = !!o.assignedRider;
+
+    if (
+      !hasRider &&
+      ["ASSIGNED", "OUT_FOR_DELIVERY", "AT_LLL_WAREHOUSE"].includes(o.status)
+    ) {
       return "Unassigned";
+    }
+
+    if (hasRider && ["ASSIGNED", "AT_LLL_WAREHOUSE"].includes(o.status)) {
+      return "Out for delivery";
     }
 
     switch (o.status) {

@@ -213,7 +213,15 @@ const CeoOrders = () => {
         (o) => !["DELIVERED", "RETURNED", "FAILED"].includes(o.status),
       );
     } else if (statusFilter === "OUT_FOR_DELIVERY") {
-      list = list.filter((o) => o.status === "OUT_FOR_DELIVERY");
+      // Treat orders with a rider and status ASSIGNED/AT_LLL_WAREHOUSE as Out for delivery
+      list = list.filter((o) => {
+        const hasRider = !!o.assignedRider;
+        if (o.status === "OUT_FOR_DELIVERY") return true;
+        if (hasRider && ["ASSIGNED", "AT_LLL_WAREHOUSE"].includes(o.status)) {
+          return true;
+        }
+        return false;
+      });
     } else if (statusFilter === "DELIVERED") {
       list = list.filter((o) => o.status === "DELIVERED");
     } else if (statusFilter === "RETURNED") {
@@ -409,15 +417,25 @@ const CeoOrders = () => {
   const statusLabel = (order) => {
     if (!order) return "";
 
-    if (!order.assignedRider && ["ASSIGNED", "OUT_FOR_DELIVERY"].includes(order.status)) {
+    const hasRider = !!order.assignedRider;
+
+    // If no rider yet but status implies it should be with a rider, show Unassigned
+    if (
+      !hasRider &&
+      ["ASSIGNED", "OUT_FOR_DELIVERY", "AT_LLL_WAREHOUSE"].includes(order.status)
+    ) {
       return "Unassigned";
+    }
+
+    // If rider is assigned and status is ASSIGNED or AT_LLL_WAREHOUSE, treat as Out for delivery
+    if (hasRider && ["ASSIGNED", "AT_LLL_WAREHOUSE"].includes(order.status)) {
+      return "Out for delivery";
     }
 
     const s = order.status;
     return (
       {
         CREATED: "Pending",
-        ASSIGNED: "In LLL Warehouse",
         AT_LLL_WAREHOUSE: "In LLL Warehouse",
         OUT_FOR_DELIVERY: "Out for delivery",
         RETURNED: "Returned",
