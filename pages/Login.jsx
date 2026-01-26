@@ -4,6 +4,7 @@ import Button from '../components/ui/Button.jsx';
 import Input from '../components/ui/Input.jsx';
 import { useNavigate, Link } from 'react-router-dom';
 import { useAuth } from '../src/contexts/AuthContext';
+import { apiFetch } from '../src/utils/apiClient';
 
 const Login = () => {
   const [formData, setFormData] = useState({
@@ -54,22 +55,16 @@ const Login = () => {
     setIsLoading(true);
     
     try {
-      const res = await fetch('/api/auth/login', {
+      const data = await apiFetch('/api/auth/login', {
         method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        credentials: 'include', // Important for cookies
-        body: JSON.stringify({
+        body: {
           email: formData.email.trim(),
-          password: formData.password
-        })
+          password: formData.password,
+        },
+        auth: false,
+        credentials: 'include', // Important for cookies
       });
-      
-      const data = await res.json();
-      
-      if (!res.ok) {
-        throw new Error(data?.message || `Login failed (HTTP ${res.status})`);
-      }
-      
+
       // Update auth context with user data
       login({
         token: data.token,
