@@ -2,7 +2,7 @@ import React, { useState } from 'react';
 import Input from '../components/ui/Input.jsx';
 import Button from '../components/ui/Button.jsx';
 import { Eye, EyeOff } from 'lucide-react';
-import { useNavigate } from 'react-router-dom';
+import { useNavigate, Link } from 'react-router-dom';
 
 const SignupRider = () => {
   const [formData, setFormData] = useState({
@@ -13,7 +13,8 @@ const SignupRider = () => {
     cnic: '',
     vehicleType: '',
     vehicleNumber: '',
-    vehicleModel: ''
+    vehicleModel: '',
+    acceptedTerms: false
   });
   const [formErrors, setFormErrors] = useState({});
   const [error, setError] = useState('');
@@ -23,10 +24,10 @@ const SignupRider = () => {
   const navigate = useNavigate();
 
   const handleChange = (e) => {
-    const { name, value } = e.target;
+    const { name, type, value, checked } = e.target;
     setFormData(prev => ({
       ...prev,
-      [name]: value
+      [name]: type === 'checkbox' ? checked : value
     }));
     
     // Clear error when user types
@@ -72,6 +73,10 @@ const SignupRider = () => {
     if (!formData.vehicleNumber.trim()) {
       errors.vehicleNumber = 'Vehicle number is required';
     }
+
+    if (!formData.acceptedTerms) {
+      errors.acceptedTerms = 'You must agree to the Standard Terms and Conditions of Carriage';
+    }
     
     setFormErrors(errors);
     return Object.keys(errors).length === 0;
@@ -86,14 +91,15 @@ const SignupRider = () => {
     setIsLoading(true);
     
     try {
-      const { confirmPassword, ...userData } = formData;
+      const { confirmPassword, acceptedTerms, ...userData } = formData;
       
       const res = await fetch('/api/auth/signup', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ 
           ...userData, 
-          role: 'RIDER' 
+          role: 'RIDER',
+          acceptedTerms: !!acceptedTerms
         })
       });
       
@@ -265,11 +271,37 @@ const SignupRider = () => {
               error={formErrors.vehicleModel}
             />
           </div>
-          
+
+          <div className="flex items-start gap-2 mt-2">
+            <input
+              id="acceptedTermsRider"
+              name="acceptedTerms"
+              type="checkbox"
+              checked={!!formData.acceptedTerms}
+              onChange={handleChange}
+              className="mt-1 h-4 w-4 rounded border-gray-300 text-primary focus:ring-primary/50"
+            />
+            <label htmlFor="acceptedTermsRider" className="text-xs text-gray-700 leading-5">
+              I agree to the{' '}
+              <Link
+                to="/terms"
+                target="_blank"
+                rel="noreferrer"
+                className="underline text-primary hover:text-primary/80"
+              >
+                Standard Terms and Conditions of Carriage
+              </Link>
+              {' '}of LahoreLink Logistics.
+            </label>
+          </div>
+          {formErrors.acceptedTerms && (
+            <p className="mt-1 text-xs text-red-500">{formErrors.acceptedTerms}</p>
+          )}
+
           <Button 
             type="submit" 
             fullWidth 
-            className="mt-2"
+            className="mt-3"
             disabled={isLoading}
           >
             {isLoading ? 'Creating Account...' : 'Create Account'}

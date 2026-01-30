@@ -2,7 +2,7 @@ import React, { useState } from 'react';
 import Input from '../components/ui/Input.jsx';
 import Button from '../components/ui/Button.jsx';
 import { Eye, EyeOff } from 'lucide-react';
-import { useNavigate } from 'react-router-dom';
+import { useNavigate, Link } from 'react-router-dom';
 
 const SignupShipper = () => {
   const [formData, setFormData] = useState({
@@ -19,7 +19,8 @@ const SignupShipper = () => {
     accountType: '',
     accountHolderName: '',
     accountNumber: '',
-    iban: ''
+    iban: '',
+    acceptedTerms: false
   });
   const [formErrors, setFormErrors] = useState({});
   const [error, setError] = useState('');
@@ -29,10 +30,10 @@ const SignupShipper = () => {
   const navigate = useNavigate();
 
   const handleChange = (e) => {
-    const { name, value } = e.target;
+    const { name, type, value, checked } = e.target;
     setFormData(prev => ({
       ...prev,
-      [name]: value
+      [name]: type === 'checkbox' ? checked : value
     }));
     
     // Clear error when user types
@@ -74,6 +75,10 @@ const SignupShipper = () => {
     if (!formData.accountHolderName.trim()) errors.accountHolderName = 'Account holder name is required';
     if (!formData.accountNumber.trim()) errors.accountNumber = 'Account number is required';
     
+    if (!formData.acceptedTerms) {
+      errors.acceptedTerms = 'You must agree to the Standard Terms and Conditions of Carriage';
+    }
+
     setFormErrors(errors);
     return Object.keys(errors).length === 0;
   };
@@ -87,7 +92,7 @@ const SignupShipper = () => {
     setIsLoading(true);
     
     try {
-      const { confirmPassword, ...userData } = formData;
+      const { confirmPassword, acceptedTerms, ...userData } = formData;
       
       const res = await fetch('/api/auth/signup', {
         method: 'POST',
@@ -95,7 +100,8 @@ const SignupShipper = () => {
         body: JSON.stringify({ 
           ...userData,
           role: 'SHIPPER',
-          accountType: formData.accountType
+          accountType: formData.accountType,
+          acceptedTerms: !!acceptedTerms
         })
       });
       
@@ -325,10 +331,36 @@ const SignupShipper = () => {
             {formErrors.iban && <p className="mt-1 text-sm text-red-500">{formErrors.iban}</p>}
           </div>
           
+          <div className="flex items-start gap-2 mt-2">
+            <input
+              id="acceptedTermsShipper"
+              name="acceptedTerms"
+              type="checkbox"
+              checked={!!formData.acceptedTerms}
+              onChange={handleChange}
+              className="mt-1 h-4 w-4 rounded border-gray-300 text-primary focus:ring-primary/50"
+            />
+            <label htmlFor="acceptedTermsShipper" className="text-xs text-gray-700 leading-5">
+              I agree to the{' '}
+              <Link
+                to="/terms"
+                target="_blank"
+                rel="noreferrer"
+                className="underline text-primary hover:text-primary/80"
+              >
+                Standard Terms and Conditions of Carriage
+              </Link>
+              {' '}of LahoreLink Logistics.
+            </label>
+          </div>
+          {formErrors.acceptedTerms && (
+            <p className="mt-1 text-xs text-red-500">{formErrors.acceptedTerms}</p>
+          )}
+
           <Button 
             type="submit" 
             fullWidth 
-            className="mt-2"
+            className="mt-3"
             disabled={isLoading}
           >
             {isLoading ? 'Creating Account...' : 'Create Account'}

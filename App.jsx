@@ -47,6 +47,7 @@ import SignupRider from "./pages/SignupRider.jsx";
 import ForgotPassword from "./pages/ForgotPassword.jsx";
 import ResetPassword from "./pages/ResetPassword.jsx";
 import ScannerPage from "./pages/ScannerPage.jsx";
+import Terms from "./pages/Terms.jsx";
 
 // Handle OAuth callback
 const AuthCallback = () => {
@@ -121,6 +122,7 @@ const AppContent = () => {
     <Routes>
       {/* Public routes */}
       <Route path="/auth/callback" element={<AuthCallback />} />
+      <Route path="/terms" element={<Terms />} />
 
       {/* Auth routes - only accessible when not logged in */}
       <Route
