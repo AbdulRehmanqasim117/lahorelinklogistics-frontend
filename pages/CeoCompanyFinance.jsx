@@ -327,6 +327,60 @@ const CeoCompanyFinance = () => {
     fetchData({ range: "all", from: "", to: "" });
   };
 
+  const handleDownloadReport = async () => {
+    try {
+      const params = new URLSearchParams();
+
+      const rangeKey = activeRange;
+      if (rangeKey && rangeKey !== "custom" && rangeKey !== "all") {
+        if (rangeKey === "today") params.set("range", "today");
+        else if (rangeKey === "7") params.set("range", "7d");
+        else if (rangeKey === "15") params.set("range", "15d");
+        else if (rangeKey === "30") params.set("range", "30d");
+      } else if (rangeKey === "all") {
+        params.set("range", "all");
+      }
+
+      if (from) params.set("from", from);
+      if (to) params.set("to", to);
+
+      if (shipperFilter && shipperFilter !== "all") {
+        params.set("shipperId", shipperFilter);
+      }
+      if (riderFilter && riderFilter !== "all") {
+        params.set("riderId", riderFilter);
+      }
+
+      const headers = {
+        Authorization: token ? `Bearer ${token}` : "",
+      };
+
+      const res = await fetch(
+        `/api/finance/company/ledger/export.xlsx?${params.toString()}`,
+        { headers },
+      );
+
+      if (!res.ok) {
+        const text = await res.text().catch(() => "");
+        throw new Error(text || "Failed to download finance report");
+      }
+
+      const blob = await res.blob();
+      const url = window.URL.createObjectURL(blob);
+      const a = document.createElement("a");
+      a.href = url;
+      a.download = `Company_Ledger_${new Date()
+        .toISOString()
+        .slice(0, 10)}.xlsx`;
+      document.body.appendChild(a);
+      a.click();
+      a.remove();
+      window.URL.revokeObjectURL(url);
+    } catch (e) {
+      setError(e.message || "Failed to download finance report");
+    }
+  };
+
   const handleCloseCurrentMonth = async () => {
     const confirmed = window.confirm(
       "Close current finance month? This will lock the current period and start a new active month."
@@ -376,7 +430,7 @@ const CeoCompanyFinance = () => {
             <h3 className="text-lg font-bold text-secondary">Company Finance</h3>
           </div>
 
-          <div className="flex flex-col items-stretch sm:flex-row sm:items-center gap-2 text-xs">
+          <div className="flex flex-col items-stretch sm:flex-row sm:items-center gap-2 text-xs text-gray-500 w-full md:w-auto">
             {[
               { key: "today", label: "Today" },
               { key: "7", label: "7 Days" },
@@ -642,6 +696,13 @@ const CeoCompanyFinance = () => {
                 className="px-4 py-2 text-xs"
               >
                 Reset
+              </Button>
+              <Button
+                variant="outline"
+                onClick={handleDownloadReport}
+                className="px-4 py-2 text-xs"
+              >
+                Download Report
               </Button>
             </div>
 
