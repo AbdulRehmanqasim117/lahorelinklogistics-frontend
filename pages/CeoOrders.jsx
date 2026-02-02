@@ -419,16 +419,18 @@ const CeoOrders = () => {
 
     const hasRider = !!order.assignedRider;
 
-    // If no rider yet but status implies it should be with a rider, show Unassigned
+    // "Unassigned" sirf un orders ke liye jinhon ne abhi tak warehouse
+    // reach nahi kiya aur jin par rider assigned nahi hai.
     if (
       !hasRider &&
-      ["ASSIGNED", "OUT_FOR_DELIVERY", "AT_LLL_WAREHOUSE"].includes(order.status)
+      ["ASSIGNED", "OUT_FOR_DELIVERY"].includes(order.status)
     ) {
       return "Unassigned";
     }
 
-    // If rider is assigned and status is ASSIGNED or AT_LLL_WAREHOUSE, treat as Out for delivery
-    if (hasRider && ["ASSIGNED", "AT_LLL_WAREHOUSE"].includes(order.status)) {
+    // Rider assigned ho aur status ASSIGNED ho to CEO view mein
+    // isay Out for delivery treat karte hain.
+    if (hasRider && order.status === "ASSIGNED") {
       return "Out for delivery";
     }
 

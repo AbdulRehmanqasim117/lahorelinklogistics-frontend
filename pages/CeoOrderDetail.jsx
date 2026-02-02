@@ -93,18 +93,19 @@ const CeoOrderDetail = () => {
 
     const hasRider = !!o.assignedRider;
 
-    if (
-      !hasRider &&
-      ["ASSIGNED", "OUT_FOR_DELIVERY", "AT_LLL_WAREHOUSE"].includes(o.status)
-    ) {
+    // Unassigned sirf ASSIGNED / OUT_FOR_DELIVERY bina rider ke liye
+    if (!hasRider && ["ASSIGNED", "OUT_FOR_DELIVERY"].includes(o.status)) {
       return "Unassigned";
     }
 
-    if (hasRider && ["ASSIGNED", "AT_LLL_WAREHOUSE"].includes(o.status)) {
+    // Rider assigned ho aur status ASSIGNED ho to Out for delivery
+    if (hasRider && o.status === "ASSIGNED") {
       return "Out for delivery";
     }
 
     switch (o.status) {
+      case "AT_LLL_WAREHOUSE":
+        return "In LLL Warehouse";
       case "OUT_FOR_DELIVERY":
         return "Out for delivery";
       case "DELIVERED":
@@ -116,7 +117,6 @@ const CeoOrderDetail = () => {
       case "CREATED":
         return "Created";
       case "ASSIGNED":
-      case "AT_LLL_WAREHOUSE":
         return "Assigned";
       default:
         return o.status;
