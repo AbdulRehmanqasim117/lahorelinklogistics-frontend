@@ -36,6 +36,7 @@ const CeoOrders = () => {
   const [editSaving, setEditSaving] = useState(false);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState("");
+  const [isDownloading, setIsDownloading] = useState(false);
   const [searchId, setSearchId] = useState("");
   const [suggestions, setSuggestions] = useState([]);
 
@@ -460,6 +461,103 @@ const CeoOrders = () => {
     );
   };
 
+  const handleDownloadReport = async () => {
+    if (!token) return;
+    setIsDownloading(true);
+    try {
+      const params = new URLSearchParams();
+
+      const now = new Date();
+      let start = null;
+      let end = null;
+
+      if (dateRange !== "all") {
+        if (dateRange === "today") {
+          start = new Date(now);
+          start.setHours(0, 0, 0, 0);
+          end = new Date(now);
+          end.setHours(23, 59, 59, 999);
+        } else if (dateRange === "week") {
+          const day = now.getDay();
+          const diffToMonday = day === 0 ? -6 : 1 - day;
+          start = new Date(now);
+          start.setDate(now.getDate() + diffToMonday);
+          start.setHours(0, 0, 0, 0);
+          end = new Date(start);
+          end.setDate(start.getDate() + 6);
+          end.setHours(23, 59, 59, 999);
+        } else if (dateRange === "month") {
+          start = new Date(now.getFullYear(), now.getMonth(), 1, 0, 0, 0, 0);
+          end = new Date(
+            now.getFullYear(),
+            now.getMonth() + 1,
+            0,
+            23,
+            59,
+            59,
+            999,
+          );
+        }
+      }
+
+      if (start && end) {
+        const fmt = (d) => {
+          const y = d.getFullYear();
+          const m = String(d.getMonth() + 1).padStart(2, "0");
+          const day = String(d.getDate()).padStart(2, "0");
+          return `${y}-${m}-${day}`;
+        };
+        params.set("from", fmt(start));
+        params.set("to", fmt(end));
+      }
+
+      if (statusFilter && statusFilter !== "ALL") {
+        params.set("status", statusFilter);
+      }
+
+      if (selectedRiderFilter) {
+        params.set("riderId", selectedRiderFilter);
+      }
+
+      if (shipperFilter) {
+        params.set("shipperId", shipperFilter);
+      }
+
+      const trimmedSearch = searchId.trim();
+      if (trimmedSearch) {
+        params.set("q", trimmedSearch);
+      }
+
+      const res = await fetch(`/api/reports/orders.xlsx?${params.toString()}`,
+      {
+        headers: { Authorization: `Bearer ${token}` },
+      });
+
+      if (!res.ok) {
+        const text = await res.text().catch(() => "");
+        throw new Error(text || "Failed to download orders report");
+      }
+
+      const blob = await res.blob();
+      const url = window.URL.createObjectURL(blob);
+      const a = document.createElement("a");
+      a.href = url;
+      const prefix = role === "MANAGER" ? "orders-report-MANAGER" : "orders-report-CEO";
+      a.download = `${prefix}-${new Date().toISOString().slice(0, 10)}.xlsx`;
+      document.body.appendChild(a);
+      a.click();
+      a.remove();
+      window.URL.revokeObjectURL(url);
+
+      alert("Orders report downloaded successfully.");
+    } catch (e) {
+      setError(e.message || "Failed to download orders report");
+      alert(`Error: ${e.message || "Failed to download orders report"}`);
+    } finally {
+      setIsDownloading(false);
+    }
+  };
+
   const sourceBadge = (order) => {
     if (order.isIntegrated) {
       return (
@@ -569,6 +667,14 @@ const CeoOrders = () => {
                 </ul>
               )}
             </form>
+            <button
+              type="button"
+              onClick={handleDownloadReport}
+              disabled={isDownloading}
+              className="px-4 py-1.5 text-xs rounded-full border border-gray-200 bg-white text-gray-700 hover:bg-gray-50 whitespace-nowrap disabled:opacity-50"
+            >
+              {isDownloading ? "Downloading..." : "Download Report"}
+            </button>
           </div>
         </div>
         <div className="p-6">
