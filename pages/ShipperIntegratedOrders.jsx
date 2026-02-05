@@ -6,6 +6,7 @@ const ShipperIntegratedOrders = () => {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState("");
   const [search, setSearch] = useState("");
+  const [cityFilter, setCityFilter] = useState("all");
   const [actionLoading, setActionLoading] = useState({});
 
   const token = typeof window !== "undefined" ? localStorage.getItem("token") : null;
@@ -14,9 +15,19 @@ const ShipperIntegratedOrders = () => {
     setLoading(true);
     setError("");
     try {
-      const res = await fetch("/api/integrations/shopify/orders", {
-        headers: { Authorization: token ? `Bearer ${token}` : "" },
-      });
+      const params = new URLSearchParams();
+      if (cityFilter === "lahore" || cityFilter === "others") {
+        params.set("cityFilter", cityFilter);
+      }
+
+      const query = params.toString();
+
+      const res = await fetch(
+        `/api/integrations/shopify/orders${query ? `?${query}` : ""}`,
+        {
+          headers: { Authorization: token ? `Bearer ${token}` : "" },
+        },
+      );
       const data = await res.json();
       if (!res.ok) throw new Error(data?.message || "Failed to load integrated orders");
       setOrders(Array.isArray(data) ? data : []);
@@ -29,7 +40,7 @@ const ShipperIntegratedOrders = () => {
 
   useEffect(() => {
     load();
-  }, []);
+  }, [cityFilter]);
 
   const filtered = useMemo(() => {
     const q = search.trim().toLowerCase();
@@ -144,6 +155,15 @@ const ShipperIntegratedOrders = () => {
           </div>
 
           <div className="flex flex-wrap items-center gap-2 w-full sm:w-auto">
+            <select
+              value={cityFilter}
+              onChange={(e) => setCityFilter(e.target.value)}
+              className="pl-3 pr-4 py-1.5 text-sm border border-gray-200 rounded-lg w-full sm:w-auto"
+            >
+              <option value="all">All</option>
+              <option value="lahore">Lahore</option>
+              <option value="others">Others</option>
+            </select>
             <input
               value={search}
               onChange={(e) => setSearch(e.target.value)}

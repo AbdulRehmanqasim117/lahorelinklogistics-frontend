@@ -14,6 +14,7 @@ import {
   ArrowDownToLine,
   User,
   Bike,
+  Trash2,
 } from "lucide-react";
 import MobileStatCard from "../components/ui/MobileStatCard.jsx";
 import StatusCard from "../components/ui/StatusCard.jsx";
@@ -69,6 +70,9 @@ const ShipperDashboard = () => {
   const [suggestions, setSuggestions] = useState([]);
   const [selecting, setSelecting] = useState(false);
   const [selected, setSelected] = useState([]);
+  const [isDownloading, setIsDownloading] = useState(false);
+  const [deletingOrder, setDeletingOrder] = useState(null);
+  const [deleteLoading, setDeleteLoading] = useState(false);
 
   const fetchOrders = async () => {
     try {
@@ -409,6 +413,134 @@ const ShipperDashboard = () => {
 
     return indexed.map((x) => x.o);
   }, [statusFiltered, sortValue]);
+
+  const handleDownloadReport = async () => {
+    if (!token) return;
+    setIsDownloading(true);
+    try {
+      const params = new URLSearchParams();
+
+      const now = new Date();
+      let start = null;
+      let end = null;
+
+      if (dateRange !== "all") {
+        if (dateRange === "today") {
+          start = new Date(now);
+          start.setHours(0, 0, 0, 0);
+          end = new Date(now);
+          end.setHours(23, 59, 59, 999);
+        } else if (dateRange === "week") {
+          const day = now.getDay();
+          const diffToMonday = day === 0 ? -6 : 1 - day;
+          start = new Date(now);
+          start.setDate(now.getDate() + diffToMonday);
+          start.setHours(0, 0, 0, 0);
+          end = new Date(start);
+          end.setDate(start.getDate() + 6);
+          end.setHours(23, 59, 59, 999);
+        } else if (dateRange === "month") {
+          start = new Date(now.getFullYear(), now.getMonth(), 1, 0, 0, 0, 0);
+          end = new Date(
+            now.getFullYear(),
+            now.getMonth() + 1,
+            0,
+            23,
+            59,
+            59,
+            999,
+          );
+        }
+      }
+
+      if (start && end) {
+        const fmt = (d) => {
+          const y = d.getFullYear();
+          const m = String(d.getMonth() + 1).padStart(2, "0");
+          const day = String(d.getDate()).padStart(2, "0");
+          return `${y}-${m}-${day}`;
+        };
+        params.set("from", fmt(start));
+        params.set("to", fmt(end));
+      }
+
+      if (statusFilter && statusFilter !== "ALL") {
+        params.set("status", statusFilter);
+      }
+
+      const trimmedSearch = search.trim();
+      if (trimmedSearch) {
+        params.set("q", trimmedSearch);
+      }
+
+      const res = await fetch(
+        `/api/shipper/reports/orders.xlsx?${params.toString()}`,
+        {
+          headers: { Authorization: token ? `Bearer ${token}` : "" },
+        },
+      );
+
+      if (!res.ok) {
+        let text = "";
+        try {
+          text = await res.text();
+        } catch (_) {}
+        throw new Error(text || "Failed to download orders report");
+      }
+
+      const blob = await res.blob();
+      const url = window.URL.createObjectURL(blob);
+      const a = document.createElement("a");
+      a.href = url;
+      a.download = `shipper-orders-report-${new Date()
+        .toISOString()
+        .slice(0, 10)}.xlsx`;
+      document.body.appendChild(a);
+      a.click();
+      a.remove();
+      window.URL.revokeObjectURL(url);
+
+      alert("Orders report downloaded successfully.");
+    } catch (e) {
+      setError(e.message || "Failed to download orders report");
+      alert(`Error: ${e.message || "Failed to download orders report"}`);
+    } finally {
+      setIsDownloading(false);
+    }
+  };
+
+  const handleConfirmDelete = async () => {
+    if (!deletingOrder || !token) return;
+    setDeleteLoading(true);
+    try {
+      const res = await fetch(`/api/shipper/orders/${deletingOrder._id}`, {
+        method: "DELETE",
+        headers: {
+          Authorization: token ? `Bearer ${token}` : "",
+        },
+      });
+
+      let data = null;
+      try {
+        data = await res.json();
+      } catch (_) {}
+
+      if (!res.ok) {
+        throw new Error(data?.message || "Failed to delete order");
+      }
+
+      alert("Order deleted successfully");
+
+      setOrders((prev) => prev.filter((o) => o._id !== deletingOrder._id));
+      setFiltered((prev) => prev.filter((o) => o._id !== deletingOrder._id));
+      setDeletingOrder(null);
+    } catch (e) {
+      setError(e.message || "Failed to delete order");
+      alert(`Error: ${e.message || "Failed to delete order"}`);
+    } finally {
+      setDeleteLoading(false);
+    }
+  };
 
   useEffect(() => {
     const q = searchId.trim().toLowerCase();
@@ -1213,6 +1345,13 @@ const ShipperDashboard = () => {
                   placeholder="Search orders..."
                   className="pl-3 pr-4 py-1.5 text-sm border border-gray-200 rounded-lg w-full sm:w-auto"
                 />
+                <button
+                  onClick={handleDownloadReport}
+                  disabled={isDownloading}
+                  className="px-3 py-1.5 text-xs rounded border border-gray-200 bg-white text-gray-700 hover:bg-gray-50 disabled:opacity-50"
+                >
+                  {isDownloading ? "Downloading..." : "Download Report"}
+                </button>
                 <select
                   value={statusFilter}
                   onChange={(e) => setStatusFilter(e.target.value)}
@@ -1344,17 +1483,37 @@ const ShipperDashboard = () => {
                         </td>
                         <td className="py-2 px-3 text-xs">{o.paymentType}</td>
                         <td className="py-2 px-3">
-                          {o.isIntegrated && o.bookingState === "UNBOOKED" && (
-                            <button
-                              className="px-3 py-1 text-xs rounded border border-primary text-primary hover:bg-primary hover:text-white"
-                              onClick={(e) => {
-                                e.stopPropagation();
-                                bookOrderNow(o._id);
-                              }}
-                            >
-                              Book Now
-                            </button>
-                          )}
+                          <div className="flex items-center gap-2">
+                            {o.isIntegrated && o.bookingState === "UNBOOKED" && (
+                              <button
+                                className="px-3 py-1 text-xs rounded border border-primary text-primary hover:bg-primary hover:text-white"
+                                onClick={(e) => {
+                                  e.stopPropagation();
+                                  bookOrderNow(o._id);
+                                }}
+                              >
+                                Book Now
+                              </button>
+                            )}
+                            {![
+                              "DELIVERED",
+                              "RETURNED",
+                              "FAILED",
+                              "OUT_FOR_DELIVERY",
+                              "AT_LLL_WAREHOUSE",
+                            ].includes(o.status) && (
+                              <button
+                                type="button"
+                                className="p-1 rounded-full text-red-600 hover:bg-red-50"
+                                onClick={(e) => {
+                                  e.stopPropagation();
+                                  setDeletingOrder(o);
+                                }}
+                              >
+                                <Trash2 className="w-4 h-4" />
+                              </button>
+                            )}
+                          </div>
                         </td>
                       </tr>
                     ))}
@@ -1365,6 +1524,38 @@ const ShipperDashboard = () => {
           </div>
         </div>
       ) : null}
+      {deletingOrder && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/50">
+          <div className="bg-white rounded-xl shadow-2xl w-full max-w-sm overflow-hidden">
+            <div className="p-6 border-b border-gray-100">
+              <h3 className="text-lg font-bold text-secondary">Delete order?</h3>
+              <p className="mt-2 text-sm text-gray-600">
+                This will permanently remove this order. This action cannot be undone.
+              </p>
+            </div>
+            <div className="p-4 flex justify-end gap-3">
+              <button
+                type="button"
+                className="px-4 py-1.5 text-xs rounded border border-gray-200 bg-white text-gray-700 hover:bg-gray-50"
+                onClick={() => {
+                  if (!deleteLoading) setDeletingOrder(null);
+                }}
+                disabled={deleteLoading}
+              >
+                Cancel
+              </button>
+              <button
+                type="button"
+                className="px-4 py-1.5 text-xs rounded border border-red-200 bg-red-600 text-white hover:bg-red-700 disabled:opacity-50"
+                onClick={handleConfirmDelete}
+                disabled={deleteLoading}
+              >
+                {deleteLoading ? "Deleting..." : "Delete"}
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   );
 };
