@@ -671,7 +671,7 @@ const CeoOrders = () => {
               type="button"
               onClick={handleDownloadReport}
               disabled={isDownloading}
-              className="px-4 py-1.5 text-xs rounded-full border border-gray-200 bg-white text-gray-700 hover:bg-gray-50 whitespace-nowrap disabled:opacity-50"
+              className="px-4 py-1.5 text-xs rounded-full  bg-[#0b6d45] text-white hover:bg-[#15803d] hover:text-white transition-all duration-300 whitespace-nowrap disabled:opacity-50"
             >
               {isDownloading ? "Downloading..." : "Download Report"}
             </button>
